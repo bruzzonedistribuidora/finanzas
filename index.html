@@ -27603,6 +27603,7 @@ function transferirEntreCajas() {
                         <td><span class="badge badge-info">${cantAdelantos} adelantos</span></td>
                         <td><span class="badge ${totalAdelantos > 0 ? 'badge-fijo' : 'badge-variable'}" style="background: ${totalAdelantos > 0 ? '#ffc107' : '#28a745'};"><b>$${Math.round(totalAdelantos).toLocaleString('es-AR')} ARS</b></span></td>
                         <td>
+                            <button class="btn btn-success btn-sm" onclick="abrirModalPagarSueldo(${i})" title="Pagar sueldo">💰 Pagar</button>
                             <button class="btn btn-info btn-sm" onclick="abrirModalAdelanto(${i})" title="Agregar adelanto">💵 Adelanto</button>
                             <button class="btn btn-warning btn-sm" onclick="verAdelantosEmpleado(${i})" title="Ver adelantos">👁️</button>
                             <button class="btn btn-danger btn-sm" onclick="eliminarEmpleado(${i})">🗑️</button>
@@ -27661,6 +27662,44 @@ function transferirEntreCajas() {
                 </div>
             `;
 
+            // Modal para pagar sueldo
+            html += `
+                <div id="modalPagarSueldo" style="display:none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 9999; align-items: center; justify-content: center;">
+                    <div style="background: white; padding: 30px; border-radius: 12px; box-shadow: 0 8px 32px rgba(0,0,0,0.2); max-width: 550px; width: 90%; max-height: 90vh; overflow-y: auto;">
+                        <h3 style="margin-top: 0; color: #333;">💰 Pagar Sueldo</h3>
+                        <p id="modalPagarEmpleadoNombre" style="color: #666; margin-bottom: 20px;"></p>
+                        
+                        <div id="resumenPagoSueldo" style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                            <!-- Se llena dinámicamente -->
+                        </div>
+                        
+                        <div style="margin-bottom: 15px;">
+                            <label style="display: block; margin-bottom: 5px;"><b>Método de Pago</b></label>
+                            <select id="metodoPagoSueldo">
+                                <option value="efectivo">💵 Efectivo</option>
+                                <option value="transferencia">🏦 Transferencia Bancaria</option>
+                                <option value="cheque">📄 Cheque</option>
+                            </select>
+                        </div>
+                        
+                        <div style="margin-bottom: 15px;">
+                            <label style="display: block; margin-bottom: 5px;"><b>Fecha de Pago</b></label>
+                            <input type="date" id="fechaPagoSueldo" value="${new Date().toISOString().split('T')[0]}">
+                        </div>
+
+                        <div style="margin-bottom: 15px;">
+                            <label style="display: block; margin-bottom: 5px;"><b>Observaciones (opcional)</b></label>
+                            <textarea id="obsPagoSueldo" placeholder="Notas adicionales..." style="min-height: 60px;"></textarea>
+                        </div>
+
+                        <div style="display: flex; gap: 10px; justify-content: flex-end;">
+                            <button class="btn btn-warning" onclick="cerrarModalPagarSueldo()">Cancelar</button>
+                            <button class="btn btn-success" onclick="confirmarPagoSueldo()">✅ Confirmar Pago</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+
             document.getElementById('listaEmp').innerHTML = html;
         }
 
@@ -27711,6 +27750,132 @@ function transferirEntreCajas() {
             cerrarModalAdelanto();
             notif('✅ Adelanto registrado para ' + datos.empleados[i].nombre + ': $' + Math.round(montoARS).toLocaleString('es-AR') + ' ARS', 'success');
         }
+
+        // ============= FUNCIONES PARA PAGAR SUELDO =============
+        function abrirModalPagarSueldo(i) {
+            if (!datos.empleados[i]) return;
+            
+            const empleado = datos.empleados[i];
+            const sueldoARS = (empleado.sueldo || 0) * datos.config.tipoCambioBNA;
+            const adelantosPendientes = (empleado.adelantos || []).filter(a => a.estado === 'pendiente' && a.esDescuento);
+            const totalAdelantosARS = adelantosPendientes.reduce((s, a) => s + parseFloat(a.monto || 0), 0) * datos.config.tipoCambioBNA;
+            const sueldoNeto = sueldoARS - totalAdelantosARS;
+            
+            document.getElementById('modalPagarEmpleadoNombre').textContent = '👤 Empleado: ' + empleado.nombre + ' - ' + (empleado.puesto || 'Sin puesto');
+            
+            let resumenHTML = `
+                <div style="border-bottom: 1px solid #dee2e6; padding-bottom: 10px; margin-bottom: 10px;">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                        <span>💼 Sueldo Base:</span>
+                        <span style="font-weight: bold;">$${Math.round(sueldoARS).toLocaleString('es-AR')} ARS</span>
+                    </div>
+            `;
+            
+            if (adelantosPendientes.length > 0) {
+                resumenHTML += `
+                    <div style="background: #fff3cd; padding: 10px; border-radius: 8px; margin: 10px 0;">
+                        <div style="font-weight: bold; margin-bottom: 8px; color: #856404;">📋 Adelantos a descontar:</div>
+                `;
+                adelantosPendientes.forEach(a => {
+                    const montoARS = parseFloat(a.monto || 0) * datos.config.tipoCambioBNA;
+                    resumenHTML += `
+                        <div style="display: flex; justify-content: space-between; font-size: 13px; color: #856404; margin: 4px 0;">
+                            <span>- ${a.concepto || 'Adelanto'} (${a.fecha || 'S/F'})</span>
+                            <span style="color: #dc3545;">-$${Math.round(montoARS).toLocaleString('es-AR')}</span>
+                        </div>
+                    `;
+                });
+                resumenHTML += `</div>`;
+                
+                resumenHTML += `
+                    <div style="display: flex; justify-content: space-between; color: #dc3545; margin-bottom: 8px;">
+                        <span>➖ Total Descuentos:</span>
+                        <span style="font-weight: bold;">-$${Math.round(totalAdelantosARS).toLocaleString('es-AR')} ARS</span>
+                    </div>
+                `;
+            }
+            
+            resumenHTML += `
+                </div>
+                <div style="display: flex; justify-content: space-between; font-size: 1.2rem; background: ${sueldoNeto >= 0 ? '#d4edda' : '#f8d7da'}; padding: 12px; border-radius: 8px; margin-top: 10px;">
+                    <span style="font-weight: bold;">💰 SUELDO NETO A PAGAR:</span>
+                    <span style="font-weight: bold; color: ${sueldoNeto >= 0 ? '#155724' : '#721c24'};">$${Math.round(sueldoNeto).toLocaleString('es-AR')} ARS</span>
+                </div>
+            `;
+            
+            document.getElementById('resumenPagoSueldo').innerHTML = resumenHTML;
+            document.getElementById('metodoPagoSueldo').value = 'efectivo';
+            document.getElementById('fechaPagoSueldo').value = new Date().toISOString().split('T')[0];
+            document.getElementById('obsPagoSueldo').value = '';
+            
+            window.empleadoPagoIndex = i;
+            document.getElementById('modalPagarSueldo').style.display = 'flex';
+        }
+
+        function cerrarModalPagarSueldo() {
+            document.getElementById('modalPagarSueldo').style.display = 'none';
+        }
+
+        function confirmarPagoSueldo() {
+            const i = window.empleadoPagoIndex;
+            if (!datos.empleados[i]) return;
+            
+            const empleado = datos.empleados[i];
+            const sueldoARS = (empleado.sueldo || 0) * datos.config.tipoCambioBNA;
+            const adelantosPendientes = (empleado.adelantos || []).filter(a => a.estado === 'pendiente' && a.esDescuento);
+            const totalAdelantosARS = adelantosPendientes.reduce((s, a) => s + parseFloat(a.monto || 0), 0) * datos.config.tipoCambioBNA;
+            const sueldoNeto = sueldoARS - totalAdelantosARS;
+            
+            const metodoPago = document.getElementById('metodoPagoSueldo').value;
+            const fechaPago = document.getElementById('fechaPagoSueldo').value;
+            const observaciones = document.getElementById('obsPagoSueldo').value;
+            
+            // Marcar adelantos como pagados
+            if (empleado.adelantos) {
+                empleado.adelantos.forEach(a => {
+                    if (a.estado === 'pendiente' && a.esDescuento) {
+                        a.estado = 'descontado';
+                        a.fechaDescuento = fechaPago;
+                    }
+                });
+            }
+            
+            // Registrar historial de pago
+            if (!empleado.historialPagos) {
+                empleado.historialPagos = [];
+            }
+            empleado.historialPagos.push({
+                fecha: fechaPago,
+                sueldoBruto: sueldoARS / datos.config.tipoCambioBNA,
+                descuentos: totalAdelantosARS / datos.config.tipoCambioBNA,
+                sueldoNeto: sueldoNeto / datos.config.tipoCambioBNA,
+                metodoPago: metodoPago,
+                observaciones: observaciones
+            });
+            
+            // Registrar movimiento en tesorería
+            const metodosTexto = {
+                'efectivo': '💵 Efectivo',
+                'transferencia': '🏦 Transferencia',
+                'cheque': '📄 Cheque'
+            };
+            
+            datos.movimientos.push({
+                tipo: 'egreso',
+                categoria: 'Sueldos',
+                concepto: `Pago sueldo ${empleado.nombre} (${metodosTexto[metodoPago]})`,
+                monto: sueldoNeto / datos.config.tipoCambioBNA,
+                fecha: fechaPago,
+                metodoPago: metodoPago
+            });
+            
+            guardarDatos();
+            mostrarEmpleados();
+            cerrarModalPagarSueldo();
+            
+            notif(`✅ Sueldo pagado a ${empleado.nombre}: $${Math.round(sueldoNeto).toLocaleString('es-AR')} ARS (${metodosTexto[metodoPago]})`, 'success');
+        }
+        // ============= FIN FUNCIONES PAGAR SUELDO =============
 
         function verAdelantosEmpleado(i) {
             if (!datos.empleados[i]) return;
