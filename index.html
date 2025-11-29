@@ -28640,21 +28640,128 @@ function transferirEntreCajas() {
         function mostrarMovimientos() {
             const movimientosFiltrados = aplicarFiltros(datos.movimientos);
             
-            let html = '<div class="section"><h3>➕ Registrar Movimiento</h3>';
-            html += '<div class="alert alert-info">Ingresa los valores en <b>Pesos Argentinos (ARS)</b></div>';
-            html += '<div class="grid-3"><select id="tipoMovimiento"><option value="deposito">📥 Depósito</option><option value="extraccion">📤 Extracción</option><option value="transferencia">💱 Transferencia</option></select>';
-            html += '<input type="number" id="montoMovimiento" placeholder="Monto (ARS)" step="1000"><button class="btn btn-success" onclick="agregarMovimiento()">✅ Registrar</button></div></div>';
+            // Opciones de cajas disponibles
+            const cajasOpciones = `
+                <option value="efectivo">💵 Efectivo / Caja Central</option>
+                <option value="banco">🏦 Banco</option>
+                <option value="mp">📱 Mercado Pago</option>
+                <option value="cheques">📄 Cheques</option>
+                <option value="echeq">💳 E-Cheq</option>
+            `;
             
-            html += '<div class="section"><h3>📋 Movimientos Registrados</h3>';
+            let html = '<div class="section"><h3>➕ Registrar Movimiento</h3>';
+            html += '<div class="alert alert-info">Ingresa los valores en <b>Pesos Argentinos (ARS)</b>. Selecciona el tipo de movimiento y las cajas involucradas.</div>';
+            
+            // Tipo de movimiento
+            html += '<div class="grid-4" style="margin-bottom: 15px;">';
+            html += `<div>
+                <label style="font-weight: 600; color: #555;">Tipo de Movimiento:</label>
+                <select id="tipoMovimiento" onchange="toggleCajaDestino()">
+                    <option value="ingreso">📥 Ingreso (entrada de dinero)</option>
+                    <option value="egreso">📤 Egreso (salida de dinero)</option>
+                    <option value="transferencia">💱 Transferencia entre cajas</option>
+                </select>
+            </div>`;
+            
+            // Caja Origen
+            html += `<div>
+                <label style="font-weight: 600; color: #555;">Caja Origen:</label>
+                <select id="cajaOrigen">${cajasOpciones}</select>
+            </div>`;
+            
+            // Caja Destino (solo para transferencias)
+            html += `<div id="cajaDestinoContainer" style="display: none;">
+                <label style="font-weight: 600; color: #555;">Caja Destino:</label>
+                <select id="cajaDestino">${cajasOpciones.replace('value="efectivo"', 'value="banco" selected').replace('value="banco"', 'value="efectivo"')}</select>
+            </div>`;
+            
+            // Monto
+            html += `<div>
+                <label style="font-weight: 600; color: #555;">Monto (ARS):</label>
+                <input type="number" id="montoMovimiento" placeholder="Monto (ARS)" step="1000">
+            </div>`;
+            html += '</div>';
+            
+            // Descripción opcional
+            html += '<div class="grid-2" style="margin-bottom: 15px;">';
+            html += `<div>
+                <label style="font-weight: 600; color: #555;">Descripción (opcional):</label>
+                <input type="text" id="descripcionMovimiento" placeholder="Ej: Pago proveedor, Cobro cliente, etc.">
+            </div>`;
+            html += `<div style="display: flex; align-items: flex-end;">
+                <button class="btn btn-success" onclick="agregarMovimiento()" style="width: 100%;">✅ Registrar Movimiento</button>
+            </div>`;
+            html += '</div></div>';
+            
+            // Resumen de saldos por caja
+            html += '<div class="section"><h3>💰 Saldos Actuales por Caja</h3>';
+            html += '<div class="grid-5">';
+            html += `<div class="card" style="background: linear-gradient(135deg, #28a745, #20c997);"><div class="card-value">${fmt(datos.saldos.efectivo || 0)}</div><div class="card-label">💵 Efectivo</div></div>`;
+            html += `<div class="card" style="background: linear-gradient(135deg, #007bff, #0056b3);"><div class="card-value">${fmt(datos.saldos.banco || 0)}</div><div class="card-label">🏦 Banco</div></div>`;
+            html += `<div class="card" style="background: linear-gradient(135deg, #00b4d8, #0096c7);"><div class="card-value">${fmt(datos.saldos.mp || 0)}</div><div class="card-label">📱 Mercado Pago</div></div>`;
+            html += `<div class="card" style="background: linear-gradient(135deg, #6f42c1, #5a32a3);"><div class="card-value">${fmt(datos.saldos.cheques || 0)}</div><div class="card-label">📄 Cheques</div></div>`;
+            html += `<div class="card" style="background: linear-gradient(135deg, #fd7e14, #e85d04);"><div class="card-value">${fmt(datos.saldos.echeq || 0)}</div><div class="card-label">💳 E-Cheq</div></div>`;
+            html += '</div></div>';
+            
+            // Tabla de movimientos
+            html += '<div class="section"><h3>📋 Historial de Movimientos</h3>';
             
             if (movimientosFiltrados.length === 0) {
                 html += '<div class="alert alert-info">Sin movimientos registrados</div>';
             } else {
-                html += '<table><tr><th>Fecha</th><th>Tipo</th><th>Monto (ARS)</th><th></th></tr>';
-                movimientosFiltrados.forEach((m, i) => {
+                html += '<table><tr><th>Fecha</th><th>Tipo</th><th>Caja</th><th>Descripción</th><th>Monto (ARS)</th><th></th></tr>';
+                movimientosFiltrados.slice().reverse().forEach((m, idx) => {
+                    const i = movimientosFiltrados.length - 1 - idx; // índice real para eliminar
                     const montoARS = (m.monto || 0) * datos.config.tipoCambioBNA;
-                    const tipoEmoji = m.tipo === 'deposito' ? '📥' : m.tipo === 'extraccion' ? '📤' : '💱';
-                    html += `<tr><td>${fmtFecha(m.fecha)}</td><td>${tipoEmoji} ${m.tipo}</td><td>$${Math.round(montoARS).toLocaleString('es-AR')} ARS</td><td><button class="btn btn-danger btn-sm" onclick="eliminarMovimiento(${i})">🗑️</button></td></tr>`;
+                    
+                    // Determinar emoji y color según tipo
+                    let tipoEmoji, tipoColor, tipoTexto;
+                    if (m.tipo === 'ingreso') {
+                        tipoEmoji = '📥';
+                        tipoColor = '#28a745';
+                        tipoTexto = 'Ingreso';
+                    } else if (m.tipo === 'egreso') {
+                        tipoEmoji = '📤';
+                        tipoColor = '#dc3545';
+                        tipoTexto = 'Egreso';
+                    } else if (m.tipo === 'transferencia') {
+                        tipoEmoji = '💱';
+                        tipoColor = '#17a2b8';
+                        tipoTexto = 'Transferencia';
+                    } else {
+                        // Compatibilidad con movimientos antiguos
+                        tipoEmoji = m.tipo === 'deposito' ? '📥' : '📤';
+                        tipoColor = m.tipo === 'deposito' ? '#28a745' : '#dc3545';
+                        tipoTexto = m.tipo === 'deposito' ? 'Depósito' : 'Extracción';
+                    }
+                    
+                    // Nombre de caja legible
+                    const nombresCajas = {
+                        'efectivo': '💵 Efectivo',
+                        'banco': '🏦 Banco',
+                        'mp': '📱 Mercado Pago',
+                        'cheques': '📄 Cheques',
+                        'echeq': '💳 E-Cheq'
+                    };
+                    
+                    let cajaInfo = nombresCajas[m.cajaOrigen] || m.cajaOrigen || '-';
+                    if (m.tipo === 'transferencia' && m.cajaDestino) {
+                        cajaInfo = `${nombresCajas[m.cajaOrigen] || m.cajaOrigen} → ${nombresCajas[m.cajaDestino] || m.cajaDestino}`;
+                    }
+                    
+                    const descripcion = m.descripcion || '-';
+                    const montoFormateado = m.tipo === 'egreso' ? 
+                        `<span style="color: #dc3545;">-$${Math.round(montoARS).toLocaleString('es-AR')}</span>` :
+                        `<span style="color: #28a745;">+$${Math.round(montoARS).toLocaleString('es-AR')}</span>`;
+                    
+                    html += `<tr>
+                        <td>${fmtFecha(m.fecha)}</td>
+                        <td><span style="color: ${tipoColor}; font-weight: 600;">${tipoEmoji} ${tipoTexto}</span></td>
+                        <td>${cajaInfo}</td>
+                        <td>${descripcion}</td>
+                        <td style="font-weight: 600;">${montoFormateado} ARS</td>
+                        <td><button class="btn btn-danger btn-sm" onclick="eliminarMovimiento(${i})">🗑️</button></td>
+                    </tr>`;
                 });
                 html += '</table>';
             }
@@ -28662,31 +28769,106 @@ function transferirEntreCajas() {
             html += '</div>';
             document.getElementById('listaMovimientos').innerHTML = html;
         }
+        
+        // Mostrar/ocultar caja destino según tipo de movimiento
+        function toggleCajaDestino() {
+            const tipo = document.getElementById('tipoMovimiento').value;
+            const cajaDestinoContainer = document.getElementById('cajaDestinoContainer');
+            if (tipo === 'transferencia') {
+                cajaDestinoContainer.style.display = 'block';
+            } else {
+                cajaDestinoContainer.style.display = 'none';
+            }
+        }
 
         function agregarMovimiento() {
             const tipo = document.getElementById('tipoMovimiento').value;
+            const cajaOrigen = document.getElementById('cajaOrigen').value;
+            const cajaDestino = document.getElementById('cajaDestino') ? document.getElementById('cajaDestino').value : null;
+            const descripcion = document.getElementById('descripcionMovimiento').value.trim();
             const montoARS = parseFloat(document.getElementById('montoMovimiento').value) || 0;
             const montoUSD = montoARS / datos.config.tipoCambioBNA;
             
             if (montoARS <= 0) { notif('⚠️ Ingresa un monto válido', 'warning'); return; }
             
-            datos.movimientos.push({
+            // Validar transferencia entre mismas cajas
+            if (tipo === 'transferencia' && cajaOrigen === cajaDestino) {
+                notif('⚠️ La caja origen y destino deben ser diferentes', 'warning');
+                return;
+            }
+            
+            // Crear el movimiento
+            const movimiento = {
                 fecha: new Date().toISOString().split('T')[0],
                 tipo: tipo,
-                monto: montoUSD
-            });
+                cajaOrigen: cajaOrigen,
+                monto: montoUSD,
+                descripcion: descripcion || null
+            };
+            
+            // Si es transferencia, agregar caja destino
+            if (tipo === 'transferencia') {
+                movimiento.cajaDestino = cajaDestino;
+            }
+            
+            // Actualizar saldos según el tipo de movimiento
+            if (tipo === 'ingreso') {
+                datos.saldos[cajaOrigen] = (datos.saldos[cajaOrigen] || 0) + montoUSD;
+            } else if (tipo === 'egreso') {
+                datos.saldos[cajaOrigen] = (datos.saldos[cajaOrigen] || 0) - montoUSD;
+            } else if (tipo === 'transferencia') {
+                datos.saldos[cajaOrigen] = (datos.saldos[cajaOrigen] || 0) - montoUSD;
+                datos.saldos[cajaDestino] = (datos.saldos[cajaDestino] || 0) + montoUSD;
+            }
+            
+            datos.movimientos.push(movimiento);
             
             guardarDatos();
             mostrarMovimientos();
-            notif('✅ Movimiento registrado: $' + Math.round(montoARS).toLocaleString('es-AR') + ' ARS', 'success');
+            
+            // Mensaje según tipo
+            const nombresCajas = {
+                'efectivo': 'Efectivo',
+                'banco': 'Banco',
+                'mp': 'Mercado Pago',
+                'cheques': 'Cheques',
+                'echeq': 'E-Cheq'
+            };
+            
+            let mensaje = '';
+            if (tipo === 'ingreso') {
+                mensaje = `✅ Ingreso registrado: +$${Math.round(montoARS).toLocaleString('es-AR')} ARS en ${nombresCajas[cajaOrigen]}`;
+            } else if (tipo === 'egreso') {
+                mensaje = `✅ Egreso registrado: -$${Math.round(montoARS).toLocaleString('es-AR')} ARS de ${nombresCajas[cajaOrigen]}`;
+            } else {
+                mensaje = `✅ Transferencia: $${Math.round(montoARS).toLocaleString('es-AR')} ARS de ${nombresCajas[cajaOrigen]} a ${nombresCajas[cajaDestino]}`;
+            }
+            
+            notif(mensaje, 'success');
+            
+            // Limpiar campos
             document.getElementById('montoMovimiento').value = '';
+            document.getElementById('descripcionMovimiento').value = '';
         }
 
         function eliminarMovimiento(i) {
-            if (confirm('¿Eliminar?')) {
+            if (confirm('¿Eliminar este movimiento? Esto revertirá el cambio en los saldos.')) {
+                const mov = datos.movimientos[i];
+                
+                // Revertir el cambio en saldos
+                if (mov.tipo === 'ingreso') {
+                    datos.saldos[mov.cajaOrigen] = (datos.saldos[mov.cajaOrigen] || 0) - mov.monto;
+                } else if (mov.tipo === 'egreso') {
+                    datos.saldos[mov.cajaOrigen] = (datos.saldos[mov.cajaOrigen] || 0) + mov.monto;
+                } else if (mov.tipo === 'transferencia') {
+                    datos.saldos[mov.cajaOrigen] = (datos.saldos[mov.cajaOrigen] || 0) + mov.monto;
+                    datos.saldos[mov.cajaDestino] = (datos.saldos[mov.cajaDestino] || 0) - mov.monto;
+                }
+                
                 datos.movimientos.splice(i, 1);
                 guardarDatos();
                 mostrarMovimientos();
+                notif('✅ Movimiento eliminado y saldos actualizados', 'success');
             }
         }
 
