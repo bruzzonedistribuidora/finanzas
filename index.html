@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <!-- saved from url=(0108)file:///C:/Users/Administrador.SERVER.000/Documents/FINANZAS%202/sistema%20financiero%20final%20full%20.html -->
 <html lang="es"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
@@ -28775,68 +28776,107 @@ function transferirEntreCajas() {
         function mostrarMovimientos() {
             const movimientosFiltrados = aplicarFiltros(datos.movimientos);
             
-            // Opciones de cajas disponibles
-            const cajasOpciones = `
-                <option value="efectivo">💵 Efectivo / Caja Central</option>
-                <option value="banco">🏦 Banco</option>
-                <option value="mp">📱 Mercado Pago</option>
-                <option value="cheques">📄 Cheques</option>
-                <option value="echeq">💳 E-Cheq</option>
-            `;
+            // Asegurar que existan las cajas
+            if (!datos.cajas) datos.cajas = [];
+            
+            // Generar opciones de cajas dinámicamente desde datos.cajas
+            let cajasOpciones = '';
+            if (datos.cajas.length === 0) {
+                cajasOpciones = '<option value="">-- No hay cajas creadas --</option>';
+            } else {
+                datos.cajas.forEach((caja, idx) => {
+                    cajasOpciones += `<option value="${idx}">${caja.nombre}</option>`;
+                });
+            }
             
             let html = '<div class="section"><h3>➕ Registrar Movimiento</h3>';
-            html += '<div class="alert alert-info">Ingresa los valores en <b>Pesos Argentinos (ARS)</b>. Selecciona el tipo de movimiento y las cajas involucradas.</div>';
             
-            // Tipo de movimiento
-            html += '<div class="grid-4" style="margin-bottom: 15px;">';
-            html += `<div>
-                <label style="font-weight: 600; color: #555;">Tipo de Movimiento:</label>
-                <select id="tipoMovimiento" onchange="toggleCajaDestino()">
-                    <option value="ingreso">📥 Ingreso (entrada de dinero)</option>
-                    <option value="egreso">📤 Egreso (salida de dinero)</option>
-                    <option value="transferencia">💱 Transferencia entre cajas</option>
-                </select>
-            </div>`;
+            if (datos.cajas.length === 0) {
+                html += '<div class="alert alert-warning">⚠️ Primero debes crear cajas en la pestaña <b>🏦 Cajas</b> para poder registrar movimientos.</div>';
+                html += '</div>';
+            } else {
+                html += '<div class="alert alert-info">Ingresa los valores en <b>Pesos Argentinos (ARS)</b>. Selecciona el tipo de movimiento y las cajas involucradas.</div>';
+                
+                // Tipo de movimiento
+                html += '<div class="grid-4" style="margin-bottom: 15px;">';
+                html += `<div>
+                    <label style="font-weight: 600; color: #555;">Tipo de Movimiento:</label>
+                    <select id="tipoMovimiento" onchange="toggleCajaDestino()">
+                        <option value="ingreso">📥 Ingreso (entrada de dinero)</option>
+                        <option value="egreso">📤 Egreso (salida de dinero)</option>
+                        <option value="transferencia">💱 Transferencia entre cajas</option>
+                    </select>
+                </div>`;
+                
+                // Caja Origen
+                html += `<div>
+                    <label style="font-weight: 600; color: #555;">Caja:</label>
+                    <select id="cajaOrigen">${cajasOpciones}</select>
+                </div>`;
+                
+                // Caja Destino (solo para transferencias)
+                html += `<div id="cajaDestinoContainer" style="display: none;">
+                    <label style="font-weight: 600; color: #555;">Caja Destino:</label>
+                    <select id="cajaDestino">${cajasOpciones}</select>
+                </div>`;
+                
+                // Monto
+                html += `<div>
+                    <label style="font-weight: 600; color: #555;">Monto (ARS):</label>
+                    <input type="number" id="montoMovimiento" placeholder="Monto (ARS)" step="1000">
+                </div>`;
+                html += '</div>';
+                
+                // Descripción opcional
+                html += '<div class="grid-2" style="margin-bottom: 15px;">';
+                html += `<div>
+                    <label style="font-weight: 600; color: #555;">Descripción (opcional):</label>
+                    <input type="text" id="descripcionMovimiento" placeholder="Ej: Pago proveedor, Cobro cliente, etc.">
+                </div>`;
+                html += `<div style="display: flex; align-items: flex-end;">
+                    <button class="btn btn-success" onclick="agregarMovimientoFondos()" style="width: 100%;">✅ Registrar Movimiento</button>
+                </div>`;
+                html += '</div></div>';
+            }
             
-            // Caja Origen
-            html += `<div>
-                <label style="font-weight: 600; color: #555;">Caja Origen:</label>
-                <select id="cajaOrigen">${cajasOpciones}</select>
-            </div>`;
-            
-            // Caja Destino (solo para transferencias)
-            html += `<div id="cajaDestinoContainer" style="display: none;">
-                <label style="font-weight: 600; color: #555;">Caja Destino:</label>
-                <select id="cajaDestino">${cajasOpciones.replace('value="efectivo"', 'value="banco" selected').replace('value="banco"', 'value="efectivo"')}</select>
-            </div>`;
-            
-            // Monto
-            html += `<div>
-                <label style="font-weight: 600; color: #555;">Monto (ARS):</label>
-                <input type="number" id="montoMovimiento" placeholder="Monto (ARS)" step="1000">
-            </div>`;
-            html += '</div>';
-            
-            // Descripción opcional
-            html += '<div class="grid-2" style="margin-bottom: 15px;">';
-            html += `<div>
-                <label style="font-weight: 600; color: #555;">Descripción (opcional):</label>
-                <input type="text" id="descripcionMovimiento" placeholder="Ej: Pago proveedor, Cobro cliente, etc.">
-            </div>`;
-            html += `<div style="display: flex; align-items: flex-end;">
-                <button class="btn btn-success" onclick="agregarMovimiento()" style="width: 100%;">✅ Registrar Movimiento</button>
-            </div>`;
-            html += '</div></div>';
-            
-            // Resumen de saldos por caja
+            // Resumen de saldos por caja (dinámico desde datos.cajas)
             html += '<div class="section"><h3>💰 Saldos Actuales por Caja</h3>';
-            html += '<div class="grid-5">';
-            html += `<div class="card" style="background: linear-gradient(135deg, #28a745, #20c997);"><div class="card-value">${fmt(datos.saldos.efectivo || 0)}</div><div class="card-label">💵 Efectivo</div></div>`;
-            html += `<div class="card" style="background: linear-gradient(135deg, #007bff, #0056b3);"><div class="card-value">${fmt(datos.saldos.banco || 0)}</div><div class="card-label">🏦 Banco</div></div>`;
-            html += `<div class="card" style="background: linear-gradient(135deg, #00b4d8, #0096c7);"><div class="card-value">${fmt(datos.saldos.mp || 0)}</div><div class="card-label">📱 Mercado Pago</div></div>`;
-            html += `<div class="card" style="background: linear-gradient(135deg, #6f42c1, #5a32a3);"><div class="card-value">${fmt(datos.saldos.cheques || 0)}</div><div class="card-label">📄 Cheques</div></div>`;
-            html += `<div class="card" style="background: linear-gradient(135deg, #fd7e14, #e85d04);"><div class="card-value">${fmt(datos.saldos.echeq || 0)}</div><div class="card-label">💳 E-Cheq</div></div>`;
-            html += '</div></div>';
+            
+            if (datos.cajas.length === 0) {
+                html += '<div class="alert alert-info">No hay cajas creadas. Crea cajas en la pestaña 🏦 Cajas.</div>';
+            } else {
+                const totalCajas = datos.cajas.reduce((sum, c) => sum + (c.monto || 0), 0);
+                html += `<div class="card" style="margin-bottom: 15px; background: linear-gradient(135deg, #667eea, #764ba2);">
+                    <div class="card-value">${fmt(totalCajas)}</div>
+                    <div class="card-label">💼 Total en Todas las Cajas</div>
+                </div>`;
+                
+                // Determinar cuántas columnas según cantidad de cajas
+                const gridCols = datos.cajas.length <= 3 ? 'grid-3' : datos.cajas.length <= 5 ? 'grid-5' : 'grid-4';
+                html += `<div class="${gridCols}">`;
+                
+                const colores = [
+                    'linear-gradient(135deg, #28a745, #20c997)',
+                    'linear-gradient(135deg, #007bff, #0056b3)',
+                    'linear-gradient(135deg, #00b4d8, #0096c7)',
+                    'linear-gradient(135deg, #6f42c1, #5a32a3)',
+                    'linear-gradient(135deg, #fd7e14, #e85d04)',
+                    'linear-gradient(135deg, #e91e63, #c2185b)',
+                    'linear-gradient(135deg, #009688, #00796b)',
+                    'linear-gradient(135deg, #795548, #5d4037)'
+                ];
+                
+                datos.cajas.forEach((caja, idx) => {
+                    const color = colores[idx % colores.length];
+                    const montoARS = Math.round((caja.monto || 0) * datos.config.tipoCambioBNA);
+                    html += `<div class="card" style="background: ${color};">
+                        <div class="card-value">$${montoARS.toLocaleString('es-AR')} ARS</div>
+                        <div class="card-label">${caja.nombre}</div>
+                    </div>`;
+                });
+                html += '</div>';
+            }
+            html += '</div>';
             
             // Tabla de movimientos
             html += '<div class="section"><h3>📋 Historial de Movimientos</h3>';
@@ -28870,18 +28910,19 @@ function transferirEntreCajas() {
                         tipoTexto = m.tipo === 'deposito' ? 'Depósito' : 'Extracción';
                     }
                     
-                    // Nombre de caja legible
-                    const nombresCajas = {
-                        'efectivo': '💵 Efectivo',
-                        'banco': '🏦 Banco',
-                        'mp': '📱 Mercado Pago',
-                        'cheques': '📄 Cheques',
-                        'echeq': '💳 E-Cheq'
-                    };
-                    
-                    let cajaInfo = nombresCajas[m.cajaOrigen] || m.cajaOrigen || '-';
-                    if (m.tipo === 'transferencia' && m.cajaDestino) {
-                        cajaInfo = `${nombresCajas[m.cajaOrigen] || m.cajaOrigen} → ${nombresCajas[m.cajaDestino] || m.cajaDestino}`;
+                    // Obtener nombre de caja desde el índice guardado
+                    let cajaInfo = '-';
+                    if (m.cajaOrigenIdx !== undefined && datos.cajas[m.cajaOrigenIdx]) {
+                        cajaInfo = datos.cajas[m.cajaOrigenIdx].nombre;
+                        if (m.tipo === 'transferencia' && m.cajaDestinoIdx !== undefined && datos.cajas[m.cajaDestinoIdx]) {
+                            cajaInfo += ' → ' + datos.cajas[m.cajaDestinoIdx].nombre;
+                        }
+                    } else if (m.cajaOrigen) {
+                        // Compatibilidad con formato anterior
+                        cajaInfo = m.cajaOrigen;
+                        if (m.tipo === 'transferencia' && m.cajaDestino) {
+                            cajaInfo += ' → ' + m.cajaDestino;
+                        }
                     }
                     
                     const descripcion = m.descripcion || '-';
@@ -28895,7 +28936,7 @@ function transferirEntreCajas() {
                         <td>${cajaInfo}</td>
                         <td>${descripcion}</td>
                         <td style="font-weight: 600;">${montoFormateado} ARS</td>
-                        <td><button class="btn btn-danger btn-sm" onclick="eliminarMovimiento(${i})">🗑️</button></td>
+                        <td><button class="btn btn-danger btn-sm" onclick="eliminarMovimientoFondos(${i})">🗑️</button></td>
                     </tr>`;
                 });
                 html += '</table>';
@@ -28916,19 +28957,30 @@ function transferirEntreCajas() {
             }
         }
 
-        function agregarMovimiento() {
+        function agregarMovimientoFondos() {
             const tipo = document.getElementById('tipoMovimiento').value;
-            const cajaOrigen = document.getElementById('cajaOrigen').value;
-            const cajaDestino = document.getElementById('cajaDestino') ? document.getElementById('cajaDestino').value : null;
+            const cajaOrigenIdx = parseInt(document.getElementById('cajaOrigen').value);
+            const cajaDestinoIdx = document.getElementById('cajaDestino') ? parseInt(document.getElementById('cajaDestino').value) : null;
             const descripcion = document.getElementById('descripcionMovimiento').value.trim();
             const montoARS = parseFloat(document.getElementById('montoMovimiento').value) || 0;
             const montoUSD = montoARS / datos.config.tipoCambioBNA;
             
             if (montoARS <= 0) { notif('⚠️ Ingresa un monto válido', 'warning'); return; }
             
+            if (isNaN(cajaOrigenIdx) || !datos.cajas[cajaOrigenIdx]) {
+                notif('⚠️ Selecciona una caja válida', 'warning');
+                return;
+            }
+            
             // Validar transferencia entre mismas cajas
-            if (tipo === 'transferencia' && cajaOrigen === cajaDestino) {
+            if (tipo === 'transferencia' && cajaOrigenIdx === cajaDestinoIdx) {
                 notif('⚠️ La caja origen y destino deben ser diferentes', 'warning');
+                return;
+            }
+            
+            // Validar saldo suficiente para egreso o transferencia
+            if ((tipo === 'egreso' || tipo === 'transferencia') && datos.cajas[cajaOrigenIdx].monto < montoUSD) {
+                notif('⚠️ Saldo insuficiente en ' + datos.cajas[cajaOrigenIdx].nombre, 'warning');
                 return;
             }
             
@@ -28936,24 +28988,26 @@ function transferirEntreCajas() {
             const movimiento = {
                 fecha: new Date().toISOString().split('T')[0],
                 tipo: tipo,
-                cajaOrigen: cajaOrigen,
+                cajaOrigenIdx: cajaOrigenIdx,
+                cajaOrigen: datos.cajas[cajaOrigenIdx].nombre,
                 monto: montoUSD,
                 descripcion: descripcion || null
             };
             
             // Si es transferencia, agregar caja destino
             if (tipo === 'transferencia') {
-                movimiento.cajaDestino = cajaDestino;
+                movimiento.cajaDestinoIdx = cajaDestinoIdx;
+                movimiento.cajaDestino = datos.cajas[cajaDestinoIdx].nombre;
             }
             
-            // Actualizar saldos según el tipo de movimiento
+            // Actualizar saldos de las cajas según el tipo de movimiento
             if (tipo === 'ingreso') {
-                datos.saldos[cajaOrigen] = (datos.saldos[cajaOrigen] || 0) + montoUSD;
+                datos.cajas[cajaOrigenIdx].monto += montoUSD;
             } else if (tipo === 'egreso') {
-                datos.saldos[cajaOrigen] = (datos.saldos[cajaOrigen] || 0) - montoUSD;
+                datos.cajas[cajaOrigenIdx].monto -= montoUSD;
             } else if (tipo === 'transferencia') {
-                datos.saldos[cajaOrigen] = (datos.saldos[cajaOrigen] || 0) - montoUSD;
-                datos.saldos[cajaDestino] = (datos.saldos[cajaDestino] || 0) + montoUSD;
+                datos.cajas[cajaOrigenIdx].monto -= montoUSD;
+                datos.cajas[cajaDestinoIdx].monto += montoUSD;
             }
             
             datos.movimientos.push(movimiento);
@@ -28962,21 +29016,13 @@ function transferirEntreCajas() {
             mostrarMovimientos();
             
             // Mensaje según tipo
-            const nombresCajas = {
-                'efectivo': 'Efectivo',
-                'banco': 'Banco',
-                'mp': 'Mercado Pago',
-                'cheques': 'Cheques',
-                'echeq': 'E-Cheq'
-            };
-            
             let mensaje = '';
             if (tipo === 'ingreso') {
-                mensaje = `✅ Ingreso registrado: +$${Math.round(montoARS).toLocaleString('es-AR')} ARS en ${nombresCajas[cajaOrigen]}`;
+                mensaje = `✅ Ingreso registrado: +$${Math.round(montoARS).toLocaleString('es-AR')} ARS en ${datos.cajas[cajaOrigenIdx].nombre}`;
             } else if (tipo === 'egreso') {
-                mensaje = `✅ Egreso registrado: -$${Math.round(montoARS).toLocaleString('es-AR')} ARS de ${nombresCajas[cajaOrigen]}`;
+                mensaje = `✅ Egreso registrado: -$${Math.round(montoARS).toLocaleString('es-AR')} ARS de ${datos.cajas[cajaOrigenIdx].nombre}`;
             } else {
-                mensaje = `✅ Transferencia: $${Math.round(montoARS).toLocaleString('es-AR')} ARS de ${nombresCajas[cajaOrigen]} a ${nombresCajas[cajaDestino]}`;
+                mensaje = `✅ Transferencia: $${Math.round(montoARS).toLocaleString('es-AR')} ARS de ${datos.cajas[cajaOrigenIdx].nombre} a ${datos.cajas[cajaDestinoIdx].nombre}`;
             }
             
             notif(mensaje, 'success');
@@ -28986,18 +29032,20 @@ function transferirEntreCajas() {
             document.getElementById('descripcionMovimiento').value = '';
         }
 
-        function eliminarMovimiento(i) {
-            if (confirm('¿Eliminar este movimiento? Esto revertirá el cambio en los saldos.')) {
+        function eliminarMovimientoFondos(i) {
+            if (confirm('¿Eliminar este movimiento? Esto revertirá el cambio en los saldos de las cajas.')) {
                 const mov = datos.movimientos[i];
                 
-                // Revertir el cambio en saldos
-                if (mov.tipo === 'ingreso') {
-                    datos.saldos[mov.cajaOrigen] = (datos.saldos[mov.cajaOrigen] || 0) - mov.monto;
-                } else if (mov.tipo === 'egreso') {
-                    datos.saldos[mov.cajaOrigen] = (datos.saldos[mov.cajaOrigen] || 0) + mov.monto;
-                } else if (mov.tipo === 'transferencia') {
-                    datos.saldos[mov.cajaOrigen] = (datos.saldos[mov.cajaOrigen] || 0) + mov.monto;
-                    datos.saldos[mov.cajaDestino] = (datos.saldos[mov.cajaDestino] || 0) - mov.monto;
+                // Revertir el cambio en saldos de cajas
+                if (mov.cajaOrigenIdx !== undefined && datos.cajas[mov.cajaOrigenIdx]) {
+                    if (mov.tipo === 'ingreso') {
+                        datos.cajas[mov.cajaOrigenIdx].monto -= mov.monto;
+                    } else if (mov.tipo === 'egreso') {
+                        datos.cajas[mov.cajaOrigenIdx].monto += mov.monto;
+                    } else if (mov.tipo === 'transferencia' && mov.cajaDestinoIdx !== undefined && datos.cajas[mov.cajaDestinoIdx]) {
+                        datos.cajas[mov.cajaOrigenIdx].monto += mov.monto;
+                        datos.cajas[mov.cajaDestinoIdx].monto -= mov.monto;
+                    }
                 }
                 
                 datos.movimientos.splice(i, 1);
