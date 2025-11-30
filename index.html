@@ -28,6 +28,126 @@
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: 'Segoe UI', Arial, sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 10px; min-height: 100vh; }
+        
+        /* ============ ESTILOS LOGIN Y USUARIOS ============ */
+        .login-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 10000;
+        }
+        .login-box {
+            background: white;
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            max-width: 400px;
+            width: 90%;
+            text-align: center;
+        }
+        .login-box h2 {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 10px;
+            border: none;
+            display: block;
+        }
+        .login-box .logo {
+            font-size: 4rem;
+            margin-bottom: 10px;
+        }
+        .login-box input {
+            margin: 10px 0;
+            padding: 15px;
+            font-size: 16px;
+        }
+        .login-box .btn {
+            width: 100%;
+            padding: 15px;
+            font-size: 16px;
+            margin-top: 15px;
+        }
+        .login-error {
+            color: #dc3545;
+            font-size: 14px;
+            margin-top: 10px;
+            display: none;
+        }
+        .user-badge {
+            position: absolute;
+            top: 15px;
+            right: 70px;
+            background: #667eea;
+            color: white;
+            padding: 8px 15px;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .user-badge:hover {
+            background: #5a6fd6;
+        }
+        .permiso-item {
+            display: flex;
+            align-items: center;
+            padding: 10px;
+            background: white;
+            border-radius: 8px;
+            margin: 5px 0;
+            border: 1px solid #e0e0e0;
+        }
+        .permiso-item input[type="checkbox"] {
+            width: auto;
+            margin-right: 10px;
+            transform: scale(1.3);
+        }
+        .permiso-item label {
+            flex: 1;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .usuario-card {
+            background: white;
+            border-radius: 12px;
+            padding: 15px;
+            margin: 10px 0;
+            border-left: 4px solid #667eea;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .usuario-card.admin {
+            border-left-color: #ffc107;
+        }
+        .usuario-card h4 {
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .usuario-card .rol-badge {
+            font-size: 11px;
+            padding: 3px 8px;
+            border-radius: 10px;
+            background: #667eea;
+            color: white;
+        }
+        .usuario-card .rol-badge.admin {
+            background: #ffc107;
+            color: #333;
+        }
+        .permisos-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 8px;
+            margin-top: 10px;
+        }
         body.dark { background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); }
         body.dark .section, body.dark .tab-content, body.dark .header { background: #0f3460; color: #e0e0e0; }
         body.dark th { background: #144272; }
@@ -171,10 +291,24 @@
   </style>
 </head>
 <body>
-    <div class="container">
+    <!-- PANTALLA DE LOGIN -->
+    <div id="loginOverlay" class="login-overlay">
+        <div class="login-box">
+            <div class="logo">💰</div>
+            <h2>Sistema Financiero v10.0</h2>
+            <p style="color: #666; margin-bottom: 20px;">Ingresa tus credenciales para continuar</p>
+            <input type="text" id="loginUsuario" placeholder="👤 Usuario" onkeypress="if(event.key==='Enter')intentarLogin()">
+            <input type="password" id="loginPassword" placeholder="🔒 Contraseña" onkeypress="if(event.key==='Enter')intentarLogin()">
+            <button class="btn" onclick="intentarLogin()">🔓 Iniciar Sesión</button>
+            <p id="loginError" class="login-error">Usuario o contraseña incorrectos</p>
+        </div>
+    </div>
+
+    <div class="container" id="mainContainer" style="display: none;">
         <div class="header">
             <div class="dolar-badge" id="dolarBadge" onclick="cambiarTab('configuracion')" style="cursor:pointer;" title="Click para actualizar">💵 USD $<span id="tipoCambio">1.455</span></div>
             <div style="position: absolute; top: 15px; right: 60px; background: #17a2b8; color: white; padding: 6px 12px; border-radius: 8px; font-size: 11px; font-weight: bold;">☁️ Firebase</div>
+            <div class="user-badge" id="userBadge" onclick="mostrarMenuUsuario()">👤 <span id="nombreUsuarioActual">Admin</span></div>
             <h1>💰 Sistema Financiero v10.0 PRO - COMPLETO</h1>
             <p style="color: #666; margin-top: 8px; font-size: 13px;">Todos los valores en Pesos Argentinos (ARS) - Sincronizado en la nube ☁️</p>
             <div class="dark-toggle" onclick="toggleDark()" title="Modo Oscuro">🌙</div>
@@ -25920,6 +26054,7 @@
             else if (id === 'empleados') mostrarEmpleados();
             else if (id === 'recordatorios') mostrarRecordatorios();
             else if (id === 'backup') mostrarBackup();
+            else if (id === 'usuarios') mostrarPanelUsuarios();
             else if (id === 'configuracion') mostrarConfiguracion();
         }
 
@@ -30308,6 +30443,11 @@ Responde de forma clara, práctica y en español argentino. Si te preguntan tér
                     <div id="panelBackup"></div>
                 </div>
 
+                <div id="usuarios" class="tab-content">
+                    <h2>👥 Administración de Usuarios</h2>
+                    <div id="panelUsuarios"></div>
+                </div>
+
                 <div id="configuracion" class="tab-content">
                     <h2>⚙️ Configuración</h2>
                     <div id="panelConfiguracion"></div>
@@ -30315,8 +30455,388 @@ Responde de forma clara, práctica y en español argentino. Si te preguntan tér
             `;
         }
 
+        // ============ SISTEMA DE USUARIOS Y PERMISOS ============
+        let usuarioActual = null;
+        let usuarios = [];
+        
+        // Lista de todas las ventanas/tabs disponibles
+        const todasLasVentanas = [
+            { id: 'carga', nombre: '📁 Carga de Datos' },
+            { id: 'dash', nombre: '📊 Dashboard' },
+            { id: 'ingresos', nombre: '💰 Ingresos' },
+            { id: 'gastosFijos', nombre: '📈 Gastos' },
+            { id: 'gastosDetalle', nombre: '📋 Detalle Gastos' },
+            { id: 'comprasView', nombre: '🛒 Compras' },
+            { id: 'clientes', nombre: '👥 Clientes' },
+            { id: 'proveedores', nombre: '🏭 Proveedores' },
+            { id: 'puntoEquilibrio', nombre: '⚖️ Punto Equilibrio' },
+            { id: 'cajas', nombre: '🏦 Cajas' },
+            { id: 'movimientos', nombre: '💱 Movimientos' },
+            { id: 'alertas', nombre: '🔔 Alertas' },
+            { id: 'graficos', nombre: '📉 Gráficos' },
+            { id: 'proyecciones', nombre: '🔮 Proyecciones' },
+            { id: 'cashflow', nombre: '💹 Cash Flow' },
+            { id: 'ahorros', nombre: '🐷 Ahorros/IOL' },
+            { id: 'asistente', nombre: '🤖 Asistente IA' },
+            { id: 'empleados', nombre: '👔 Personal' },
+            { id: 'recordatorios', nombre: '📅 Recordatorios' },
+            { id: 'estadoResultados', nombre: '📊 Estado Resultados' },
+            { id: 'estadoFinanciero', nombre: '💹 Estado Financiero' },
+            { id: 'rentabilidad', nombre: '📈 Rentabilidad' },
+            { id: 'comparativo', nombre: '📊 Comparativo' },
+            { id: 'backup', nombre: '💾 Backup' },
+            { id: 'configuracion', nombre: '⚙️ Configuración' },
+            { id: 'usuarios', nombre: '👥 Usuarios (Admin)' }
+        ];
+        
+        function cargarUsuarios() {
+            const guardados = localStorage.getItem('sistemaFinanciero_usuarios');
+            if (guardados) {
+                usuarios = JSON.parse(guardados);
+            } else {
+                // Usuario admin por defecto
+                usuarios = [{
+                    id: 1,
+                    usuario: 'admin',
+                    password: 'admin123',
+                    nombre: 'Administrador',
+                    rol: 'admin',
+                    permisos: todasLasVentanas.map(v => v.id), // Todos los permisos
+                    activo: true,
+                    fechaCreacion: new Date().toISOString()
+                }];
+                guardarUsuarios();
+            }
+        }
+        
+        function guardarUsuarios() {
+            localStorage.setItem('sistemaFinanciero_usuarios', JSON.stringify(usuarios));
+        }
+        
+        function intentarLogin() {
+            const usuario = document.getElementById('loginUsuario').value.trim();
+            const password = document.getElementById('loginPassword').value;
+            const errorEl = document.getElementById('loginError');
+            
+            if (!usuario || !password) {
+                errorEl.textContent = 'Completa usuario y contraseña';
+                errorEl.style.display = 'block';
+                return;
+            }
+            
+            cargarUsuarios();
+            
+            const user = usuarios.find(u => u.usuario.toLowerCase() === usuario.toLowerCase() && u.password === password && u.activo);
+            
+            if (user) {
+                usuarioActual = user;
+                localStorage.setItem('sistemaFinanciero_sesion', JSON.stringify(user));
+                document.getElementById('loginOverlay').style.display = 'none';
+                document.getElementById('mainContainer').style.display = 'block';
+                document.getElementById('nombreUsuarioActual').textContent = user.nombre;
+                errorEl.style.display = 'none';
+                init();
+                notif('✅ Bienvenido ' + user.nombre, 'success');
+            } else {
+                errorEl.textContent = 'Usuario o contraseña incorrectos';
+                errorEl.style.display = 'block';
+            }
+        }
+        
+        function verificarSesion() {
+            cargarUsuarios();
+            const sesion = localStorage.getItem('sistemaFinanciero_sesion');
+            if (sesion) {
+                const user = JSON.parse(sesion);
+                // Verificar que el usuario aún existe y está activo
+                const userActual = usuarios.find(u => u.id === user.id && u.activo);
+                if (userActual) {
+                    usuarioActual = userActual;
+                    document.getElementById('loginOverlay').style.display = 'none';
+                    document.getElementById('mainContainer').style.display = 'block';
+                    document.getElementById('nombreUsuarioActual').textContent = userActual.nombre;
+                    init();
+                    return true;
+                }
+            }
+            return false;
+        }
+        
+        function cerrarSesion() {
+            if (confirm('¿Cerrar sesión?')) {
+                localStorage.removeItem('sistemaFinanciero_sesion');
+                usuarioActual = null;
+                document.getElementById('mainContainer').style.display = 'none';
+                document.getElementById('loginOverlay').style.display = 'flex';
+                document.getElementById('loginUsuario').value = '';
+                document.getElementById('loginPassword').value = '';
+                document.getElementById('loginError').style.display = 'none';
+            }
+        }
+        
+        function mostrarMenuUsuario() {
+            const opciones = usuarioActual.rol === 'admin' 
+                ? '1. Ver mi perfil\n2. Administrar usuarios\n3. Cerrar sesión'
+                : '1. Ver mi perfil\n2. Cerrar sesión';
+            
+            const opcion = prompt('👤 ' + usuarioActual.nombre + ' (' + usuarioActual.rol + ')\n\n' + opciones + '\n\nIngresa el número:');
+            
+            if (opcion === '1') {
+                alert('👤 PERFIL DE USUARIO\n\nNombre: ' + usuarioActual.nombre + '\nUsuario: ' + usuarioActual.usuario + '\nRol: ' + usuarioActual.rol + '\nPermisos: ' + usuarioActual.permisos.length + ' ventanas');
+            } else if (opcion === '2' && usuarioActual.rol === 'admin') {
+                cambiarTab('usuarios');
+            } else if ((opcion === '2' && usuarioActual.rol !== 'admin') || opcion === '3') {
+                cerrarSesion();
+            }
+        }
+        
+        function tienePermiso(ventanaId) {
+            if (!usuarioActual) return false;
+            if (usuarioActual.rol === 'admin') return true;
+            return usuarioActual.permisos.includes(ventanaId);
+        }
+        
+        function mostrarPanelUsuarios() {
+            if (usuarioActual.rol !== 'admin') {
+                document.getElementById('panelUsuarios').innerHTML = '<div class="alert alert-danger">⛔ No tienes permisos para acceder a esta sección</div>';
+                return;
+            }
+            
+            let html = `
+                <div class="section">
+                    <h3>➕ Crear Nuevo Usuario</h3>
+                    <div class="grid-4">
+                        <div>
+                            <label>Nombre completo:</label>
+                            <input type="text" id="nuevoNombre" placeholder="Ej: Juan Pérez">
+                        </div>
+                        <div>
+                            <label>Usuario:</label>
+                            <input type="text" id="nuevoUsuario" placeholder="Ej: jperez">
+                        </div>
+                        <div>
+                            <label>Contraseña:</label>
+                            <input type="password" id="nuevoPassword" placeholder="Mínimo 4 caracteres">
+                        </div>
+                        <div>
+                            <label>Rol:</label>
+                            <select id="nuevoRol">
+                                <option value="usuario">👤 Usuario</option>
+                                <option value="admin">👑 Administrador</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <h4 style="margin-top: 15px;">🔐 Permisos de Ventanas:</h4>
+                    <div class="grid-2" style="margin-top: 10px;">
+                        <button class="btn btn-info btn-sm" onclick="seleccionarTodosPermisos(true)">✅ Seleccionar Todos</button>
+                        <button class="btn btn-warning btn-sm" onclick="seleccionarTodosPermisos(false)">❌ Deseleccionar Todos</button>
+                    </div>
+                    <div class="permisos-grid" id="permisosNuevoUsuario">
+            `;
+            
+            todasLasVentanas.forEach(v => {
+                if (v.id !== 'usuarios') { // El panel de usuarios solo para admins
+                    html += `
+                        <div class="permiso-item">
+                            <input type="checkbox" id="perm_nuevo_${v.id}" checked>
+                            <label for="perm_nuevo_${v.id}">${v.nombre}</label>
+                        </div>
+                    `;
+                }
+            });
+            
+            html += `
+                    </div>
+                    <button class="btn btn-success" onclick="crearUsuario()" style="margin-top: 15px;">✅ Crear Usuario</button>
+                </div>
+                
+                <div class="section">
+                    <h3>👥 Usuarios Registrados (${usuarios.length})</h3>
+            `;
+            
+            usuarios.forEach((u, idx) => {
+                const esAdmin = u.rol === 'admin';
+                const permisosTexto = esAdmin ? 'Todos (Admin)' : u.permisos.length + ' ventanas';
+                
+                html += `
+                    <div class="usuario-card ${esAdmin ? 'admin' : ''}">
+                        <h4>
+                            ${esAdmin ? '👑' : '👤'} ${u.nombre}
+                            <span class="rol-badge ${esAdmin ? 'admin' : ''}">${u.rol}</span>
+                            ${u.activo ? '<span style="color: #28a745; font-size: 12px;">● Activo</span>' : '<span style="color: #dc3545; font-size: 12px;">● Inactivo</span>'}
+                        </h4>
+                        <p style="color: #666; font-size: 13px;">Usuario: <b>${u.usuario}</b> | Permisos: ${permisosTexto}</p>
+                        <div style="margin-top: 10px;">
+                            <button class="btn btn-info btn-sm" onclick="editarUsuario(${u.id})">✏️ Editar</button>
+                            <button class="btn btn-warning btn-sm" onclick="cambiarPasswordUsuario(${u.id})">🔑 Cambiar Contraseña</button>
+                            ${u.id !== 1 ? `<button class="btn btn-${u.activo ? 'danger' : 'success'} btn-sm" onclick="toggleActivoUsuario(${u.id})">${u.activo ? '🚫 Desactivar' : '✅ Activar'}</button>` : ''}
+                            ${u.id !== 1 ? `<button class="btn btn-danger btn-sm" onclick="eliminarUsuario(${u.id})">🗑️ Eliminar</button>` : ''}
+                        </div>
+                    </div>
+                `;
+            });
+            
+            html += '</div>';
+            
+            document.getElementById('panelUsuarios').innerHTML = html;
+        }
+        
+        function seleccionarTodosPermisos(seleccionar) {
+            todasLasVentanas.forEach(v => {
+                const checkbox = document.getElementById('perm_nuevo_' + v.id);
+                if (checkbox) checkbox.checked = seleccionar;
+            });
+        }
+        
+        function crearUsuario() {
+            const nombre = document.getElementById('nuevoNombre').value.trim();
+            const usuario = document.getElementById('nuevoUsuario').value.trim().toLowerCase();
+            const password = document.getElementById('nuevoPassword').value;
+            const rol = document.getElementById('nuevoRol').value;
+            
+            if (!nombre || !usuario || !password) {
+                notif('⚠️ Completa todos los campos', 'warning');
+                return;
+            }
+            
+            if (password.length < 4) {
+                notif('⚠️ La contraseña debe tener al menos 4 caracteres', 'warning');
+                return;
+            }
+            
+            if (usuarios.find(u => u.usuario.toLowerCase() === usuario)) {
+                notif('⚠️ El usuario ya existe', 'warning');
+                return;
+            }
+            
+            // Obtener permisos seleccionados
+            const permisos = [];
+            todasLasVentanas.forEach(v => {
+                const checkbox = document.getElementById('perm_nuevo_' + v.id);
+                if (checkbox && checkbox.checked) {
+                    permisos.push(v.id);
+                }
+            });
+            
+            if (rol === 'admin') {
+                // Admin tiene todos los permisos
+                permisos.length = 0;
+                todasLasVentanas.forEach(v => permisos.push(v.id));
+            }
+            
+            const nuevoId = Math.max(...usuarios.map(u => u.id)) + 1;
+            
+            usuarios.push({
+                id: nuevoId,
+                usuario: usuario,
+                password: password,
+                nombre: nombre,
+                rol: rol,
+                permisos: permisos,
+                activo: true,
+                fechaCreacion: new Date().toISOString()
+            });
+            
+            guardarUsuarios();
+            mostrarPanelUsuarios();
+            notif('✅ Usuario "' + nombre + '" creado correctamente', 'success');
+            
+            // Limpiar campos
+            document.getElementById('nuevoNombre').value = '';
+            document.getElementById('nuevoUsuario').value = '';
+            document.getElementById('nuevoPassword').value = '';
+        }
+        
+        function editarUsuario(id) {
+            const user = usuarios.find(u => u.id === id);
+            if (!user) return;
+            
+            let permisosHTML = '';
+            todasLasVentanas.forEach(v => {
+                if (v.id !== 'usuarios') {
+                    const checked = user.permisos.includes(v.id) ? 'checked' : '';
+                    permisosHTML += `<div style="display: inline-block; margin: 3px;"><input type="checkbox" id="edit_perm_${v.id}" ${checked}> ${v.nombre}</div><br>`;
+                }
+            });
+            
+            const nuevoNombre = prompt('Nombre:', user.nombre);
+            if (nuevoNombre === null) return;
+            
+            const nuevoRol = prompt('Rol (admin/usuario):', user.rol);
+            if (nuevoRol === null) return;
+            
+            // Para los permisos usamos un enfoque diferente
+            const editarPermisos = confirm('¿Deseas editar los permisos de ventanas?\n\nSi presionas "Aceptar" te mostraré las ventanas una por una.\nSi presionas "Cancelar" se mantienen los permisos actuales.');
+            
+            let nuevosPermisos = [...user.permisos];
+            
+            if (editarPermisos && nuevoRol !== 'admin') {
+                nuevosPermisos = [];
+                for (const v of todasLasVentanas) {
+                    if (v.id !== 'usuarios') {
+                        const tieneActual = user.permisos.includes(v.id);
+                        const dar = confirm(`¿Dar acceso a "${v.nombre}"?\n\n(Actualmente: ${tieneActual ? 'SÍ tiene acceso' : 'NO tiene acceso'})`);
+                        if (dar) nuevosPermisos.push(v.id);
+                    }
+                }
+            } else if (nuevoRol === 'admin') {
+                nuevosPermisos = todasLasVentanas.map(v => v.id);
+            }
+            
+            user.nombre = nuevoNombre || user.nombre;
+            user.rol = (nuevoRol === 'admin' || nuevoRol === 'usuario') ? nuevoRol : user.rol;
+            user.permisos = nuevosPermisos;
+            
+            guardarUsuarios();
+            mostrarPanelUsuarios();
+            notif('✅ Usuario actualizado', 'success');
+        }
+        
+        function cambiarPasswordUsuario(id) {
+            const user = usuarios.find(u => u.id === id);
+            if (!user) return;
+            
+            const nueva = prompt('Nueva contraseña para ' + user.nombre + ':');
+            if (nueva && nueva.length >= 4) {
+                user.password = nueva;
+                guardarUsuarios();
+                notif('✅ Contraseña actualizada', 'success');
+            } else if (nueva) {
+                notif('⚠️ La contraseña debe tener al menos 4 caracteres', 'warning');
+            }
+        }
+        
+        function toggleActivoUsuario(id) {
+            const user = usuarios.find(u => u.id === id);
+            if (!user || user.id === 1) return;
+            
+            user.activo = !user.activo;
+            guardarUsuarios();
+            mostrarPanelUsuarios();
+            notif(user.activo ? '✅ Usuario activado' : '🚫 Usuario desactivado', 'success');
+        }
+        
+        function eliminarUsuario(id) {
+            if (id === 1) {
+                notif('⚠️ No puedes eliminar al administrador principal', 'warning');
+                return;
+            }
+            
+            const user = usuarios.find(u => u.id === id);
+            if (!user) return;
+            
+            if (confirm('¿Eliminar al usuario "' + user.nombre + '"?\n\nEsta acción no se puede deshacer.')) {
+                usuarios = usuarios.filter(u => u.id !== id);
+                guardarUsuarios();
+                mostrarPanelUsuarios();
+                notif('✅ Usuario eliminado', 'success');
+            }
+        }
+
         function init() {
-            const tabs = [
+            // Definir todas las tabs
+            const todasLasTabs = [
                 { id: 'carga', n: '📁 Carga' },
                 { id: 'dash', n: '📊 Dashboard' },
                 { id: 'ingresos', n: '💰 Ingresos' },
@@ -30336,20 +30856,24 @@ Responde de forma clara, práctica y en español argentino. Si te preguntan tér
                 { id: 'asistente', n: '🤖 IA' },
                 { id: 'empleados', n: '👔 Personal' },
                 { id: 'recordatorios', n: '📅 Record' },
-		{ id: 'estadoResultados', n: '📊 Est.Result' },
+                { id: 'estadoResultados', n: '📊 Est.Result' },
                 { id: 'estadoFinanciero', n: '💹 Cash Flow' },
                 { id: 'rentabilidad', n: '📈 Rentabilidad' },
                 { id: 'comparativo', n: '📊 Comparativo' },
                 { id: 'backup', n: '💾 Backup' },
+                { id: 'usuarios', n: '👥 Usuarios' },
                 { id: 'configuracion', n: '⚙️ Config' }
             ];
+            
+            // Filtrar tabs según permisos del usuario
+            const tabs = todasLasTabs.filter(t => tienePermiso(t.id));
             
             const tabsContainer = document.getElementById('tabs');
             tabsContainer.innerHTML = '';
             
             tabs.forEach(function(t, i) {
                 const btn = document.createElement('button');
-                btn.className = 'tab' + (t.id === 'cajas' ? ' active' : '');
+                btn.className = 'tab' + (t.id === 'dash' ? ' active' : '');
                 btn.textContent = t.n;
                 btn.addEventListener('click', function() {
                     cambiarTab(t.id);
@@ -30359,10 +30883,19 @@ Responde de forma clara, práctica y en español argentino. Si te preguntan tér
             
             renderContent();
             cargarDatos();
-            cambiarTab('cajas');
+            
+            // Ir al dashboard por defecto (o primera tab disponible)
+            const primeraTab = tabs.find(t => t.id === 'dash') || tabs[0];
+            if (primeraTab) cambiarTab(primeraTab.id);
         }
 
-        window.onload = init;
+        // Al cargar la página, verificar sesión
+        window.onload = function() {
+            if (!verificarSesion()) {
+                // No hay sesión activa, mostrar login
+                document.getElementById('loginOverlay').style.display = 'flex';
+            }
+        };
     </script>
 
 
