@@ -1389,6 +1389,69 @@
             if (!datos.cajas) datos.cajas = [];
             document.getElementById('tipoCambio').textContent = datos.config.tipoCambioBNA.toLocaleString('es-AR');
             if (datos.config.dark) document.body.classList.add('dark');
+            
+            // Actualizar selectores de cajas en formularios
+            actualizarSelectoresCajas();
+        }
+        
+        // Función para actualizar selectores de cajas en formularios de ingreso/gasto/compra
+        function actualizarSelectoresCajas() {
+            const selectIds = ['ingCaja', 'gastCaja', 'compCaja'];
+            
+            selectIds.forEach(selectId => {
+                let select = document.getElementById(selectId);
+                
+                // Si no existe el selector, crearlo dinámicamente
+                if (!select) {
+                    // Buscar el botón de registrar correspondiente para insertar antes
+                    let parentGrid = null;
+                    let insertBefore = null;
+                    
+                    if (selectId === 'ingCaja') {
+                        const btn = document.querySelector('button[onclick="registrarIngreso()"]');
+                        if (btn) {
+                            parentGrid = btn.parentElement;
+                            insertBefore = btn;
+                        }
+                    } else if (selectId === 'gastCaja') {
+                        const btn = document.querySelector('button[onclick="registrarGasto()"]');
+                        if (btn) {
+                            parentGrid = btn.parentElement;
+                            insertBefore = btn;
+                        }
+                    } else if (selectId === 'compCaja') {
+                        const btn = document.querySelector('button[onclick="registrarCompra()"]');
+                        if (btn) {
+                            parentGrid = btn.parentElement;
+                            insertBefore = btn;
+                        }
+                    }
+                    
+                    if (parentGrid && insertBefore) {
+                        select = document.createElement('select');
+                        select.id = selectId;
+                        select.style.border = '2px solid #667eea';
+                        select.title = 'Vincular a caja (opcional)';
+                        parentGrid.insertBefore(select, insertBefore);
+                    }
+                }
+                
+                // Llenar el selector con las cajas disponibles
+                if (select) {
+                    const valorActual = select.value;
+                    select.innerHTML = '<option value="">💼 Sin vincular a caja</option>';
+                    
+                    if (datos.cajas && datos.cajas.length > 0) {
+                        datos.cajas.forEach((caja, idx) => {
+                            const saldoARS = (caja.monto || 0) * datos.config.tipoCambioBNA;
+                            select.innerHTML += `<option value="${idx}">📦 ${caja.nombre} ($${Math.round(saldoARS).toLocaleString('es-AR')})</option>`;
+                        });
+                    }
+                    
+                    // Restaurar valor seleccionado si existía
+                    if (valorActual) select.value = valorActual;
+                }
+            });
         }
 
         function toggleDark() {
@@ -1533,6 +1596,8 @@
             const desc = document.getElementById('ingDesc').value;
             const metodo = document.getElementById('ingMetodo').value;
             const cat = document.getElementById('ingCategoria').value;
+            const cajaSelect = document.getElementById('ingCaja');
+            const cajaIdx = cajaSelect ? cajaSelect.value : '';
             
             if (!montoBruto || montoBruto <= 0) { 
                 notif('⚠️ Ingrese un monto válido', 'warning'); 
@@ -1549,7 +1614,8 @@
             
             const montoNeto = montoBruto - retencion;
             
-            datos.ingresos.push({ 
+            // Crear el ingreso
+            const ingreso = { 
                 monto: montoNeto, 
                 montoBruto: montoBruto,
                 retencion: retencion,
@@ -1557,17 +1623,44 @@
                 desc: desc, 
                 metodo: metodo, 
                 cat: cat 
-            });
+            };
+            
+            // Si se seleccionó una caja, vincular y actualizar saldo
+            if (cajaIdx !== '' && datos.cajas[cajaIdx]) {
+                ingreso.cajaIdx = parseInt(cajaIdx);
+                ingreso.cajaNombre = datos.cajas[cajaIdx].nombre;
+                
+                // Actualizar saldo de la caja
+                datos.cajas[cajaIdx].monto += montoNeto;
+                
+                // Registrar en historial de la caja
+                if (!datos.cajas[cajaIdx].movimientos) datos.cajas[cajaIdx].movimientos = [];
+                datos.cajas[cajaIdx].movimientos.push({
+                    fecha: fecha,
+                    tipo: 'entrada',
+                    monto: montoNeto,
+                    motivo: '💰 Ingreso: ' + desc
+                });
+            }
+            
+            datos.ingresos.push(ingreso);
             
             guardarDatos();
             actualizarDash();
             actualizarEstadoDatos();
-            notif('✅ Ingreso registrado - Neto: ' + fmt(montoNeto) + ' (Bruto: ' + fmt(montoBruto) + ' - Ret: ' + fmt(retencion) + ')', 'success');
+            actualizarSelectoresCajas();
+            
+            let mensaje = '✅ Ingreso registrado - Neto: ' + fmt(montoNeto);
+            if (cajaIdx !== '' && datos.cajas[cajaIdx]) {
+                mensaje += ' → ' + datos.cajas[cajaIdx].nombre;
+            }
+            notif(mensaje, 'success');
             
             document.getElementById('ingMonto').value = '';
             document.getElementById('ingRetencion').value = '0';
             document.getElementById('ingFecha').value = '';
             document.getElementById('ingDesc').value = '';
+            if (cajaSelect) cajaSelect.value = '';
         }
 
         // ============ REGISTRO INDIVIDUAL DE GASTOS ============
@@ -1578,6 +1671,8 @@
             const metodo = document.getElementById('gastMetodo').value;
             const cat = document.getElementById('gastCategoria').value;
             const esVariable = document.getElementById('gastTipo').value === 'true';
+            const cajaSelect = document.getElementById('gastCaja');
+            const cajaIdx = cajaSelect ? cajaSelect.value : '';
 
             if (!monto || monto <= 0) {
                 notif('⚠️ Ingrese un monto válido', 'warning');
@@ -1591,25 +1686,61 @@
                 notif('⚠️ Ingrese una descripción', 'warning');
                 return;
             }
+            
+            // Verificar saldo suficiente si se seleccionó caja
+            if (cajaIdx !== '' && datos.cajas[cajaIdx]) {
+                if (datos.cajas[cajaIdx].monto < monto) {
+                    notif(`⚠️ Saldo insuficiente en ${datos.cajas[cajaIdx].nombre}. Disponible: ${fmt(datos.cajas[cajaIdx].monto)}`, 'warning');
+                    return;
+                }
+            }
 
-            datos.gastos.push({
+            // Crear el gasto
+            const gasto = {
                 monto: monto,
                 fecha: fecha,
                 desc: desc,
                 metodo: metodo,
                 cat: cat,
                 esVariable: esVariable
-            });
+            };
+            
+            // Si se seleccionó una caja, vincular y actualizar saldo
+            if (cajaIdx !== '' && datos.cajas[cajaIdx]) {
+                gasto.cajaIdx = parseInt(cajaIdx);
+                gasto.cajaNombre = datos.cajas[cajaIdx].nombre;
+                
+                // Restar del saldo de la caja
+                datos.cajas[cajaIdx].monto -= monto;
+                
+                // Registrar en historial de la caja
+                if (!datos.cajas[cajaIdx].movimientos) datos.cajas[cajaIdx].movimientos = [];
+                datos.cajas[cajaIdx].movimientos.push({
+                    fecha: fecha,
+                    tipo: 'salida',
+                    monto: monto,
+                    motivo: '📤 Gasto: ' + desc
+                });
+            }
+
+            datos.gastos.push(gasto);
 
             guardarDatos();
             actualizarDash();
             actualizarEstadoDatos();
             mostrarGastos();
-            notif('✅ Gasto registrado: ' + fmt(monto), 'success');
+            actualizarSelectoresCajas();
+            
+            let mensaje = '✅ Gasto registrado: ' + fmt(monto);
+            if (cajaIdx !== '' && datos.cajas[cajaIdx]) {
+                mensaje += ' ← ' + datos.cajas[cajaIdx].nombre;
+            }
+            notif(mensaje, 'success');
 
             document.getElementById('gastMonto').value = '';
             document.getElementById('gastFecha').value = '';
             document.getElementById('gastDesc').value = '';
+            if (cajaSelect) cajaSelect.value = '';
         }
 
         // ============ REGISTRO INDIVIDUAL DE COMPRAS ============
@@ -1620,6 +1751,8 @@
             const prov = document.getElementById('compProv').value;
             const metodo = document.getElementById('compMetodo').value;
             const cat = document.getElementById('compCategoria').value;
+            const cajaSelect = document.getElementById('compCaja');
+            const cajaIdx = cajaSelect ? cajaSelect.value : '';
 
             if (!monto || monto <= 0) {
                 notif('⚠️ Ingrese un monto válido', 'warning');
@@ -1633,25 +1766,61 @@
                 notif('⚠️ Ingrese una descripción', 'warning');
                 return;
             }
+            
+            // Verificar saldo suficiente si se seleccionó caja
+            if (cajaIdx !== '' && datos.cajas[cajaIdx]) {
+                if (datos.cajas[cajaIdx].monto < monto) {
+                    notif(`⚠️ Saldo insuficiente en ${datos.cajas[cajaIdx].nombre}. Disponible: ${fmt(datos.cajas[cajaIdx].monto)}`, 'warning');
+                    return;
+                }
+            }
 
-            datos.compras.push({
+            // Crear la compra
+            const compra = {
                 monto: monto,
                 fecha: fecha,
                 desc: desc,
                 prov: prov || 'Sin proveedor',
                 metodo: metodo,
                 cat: cat
-            });
+            };
+            
+            // Si se seleccionó una caja, vincular y actualizar saldo
+            if (cajaIdx !== '' && datos.cajas[cajaIdx]) {
+                compra.cajaIdx = parseInt(cajaIdx);
+                compra.cajaNombre = datos.cajas[cajaIdx].nombre;
+                
+                // Restar del saldo de la caja
+                datos.cajas[cajaIdx].monto -= monto;
+                
+                // Registrar en historial de la caja
+                if (!datos.cajas[cajaIdx].movimientos) datos.cajas[cajaIdx].movimientos = [];
+                datos.cajas[cajaIdx].movimientos.push({
+                    fecha: fecha,
+                    tipo: 'salida',
+                    monto: monto,
+                    motivo: '🛒 Compra: ' + desc + (prov ? ' (' + prov + ')' : '')
+                });
+            }
+
+            datos.compras.push(compra);
 
             guardarDatos();
             actualizarDash();
             actualizarEstadoDatos();
-            notif('✅ Compra registrada: ' + fmt(monto), 'success');
+            actualizarSelectoresCajas();
+            
+            let mensaje = '✅ Compra registrada: ' + fmt(monto);
+            if (cajaIdx !== '' && datos.cajas[cajaIdx]) {
+                mensaje += ' ← ' + datos.cajas[cajaIdx].nombre;
+            }
+            notif(mensaje, 'success');
 
             document.getElementById('compMonto').value = '';
             document.getElementById('compFecha').value = '';
             document.getElementById('compDesc').value = '';
             document.getElementById('compProv').value = '';
+            if (cajaSelect) cajaSelect.value = '';
         }
 
         // ============ FUNCIONES DE CAJAS - CORRECTAS ============
@@ -3106,31 +3275,68 @@ function transferirEntreCajas() {
 
         // ============ EMPLEADOS ============
         function mostrarEmpleados() {
+            const mesActual = new Date().getMonth();
+            const añoActual = new Date().getFullYear();
+            const nombreMes = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'][mesActual];
+            
             let html = '<div class="section"><h3>➕ Agregar Empleado</h3>';
             html += '<div class="alert alert-info">Ingresa el sueldo en <b>Pesos Argentinos (ARS)</b></div>';
             html += '<div class="grid-4"><input type="text" id="empNombre" placeholder="Nombre"><input type="text" id="empPuesto" placeholder="Puesto"><input type="number" id="empSueldo" placeholder="Sueldo (ARS)" step="1000"><button class="btn btn-success" onclick="agregarEmpleado()">✅ Agregar</button></div></div>';
             
-            html += '<div class="section"><h3>👔 Lista de Empleados y Adelantos</h3>';
+            html += `<div class="section"><h3>👔 Lista de Empleados y Adelantos - ${nombreMes} ${añoActual}</h3>`;
             
             if (datos.empleados.length === 0) {
                 html += '<div class="alert alert-info">📋 No hay empleados registrados</div>';
             } else {
-                html += '<table><tr><th>Nombre</th><th>Puesto</th><th>Sueldo Mensual (ARS)</th><th>Adelantos</th><th>Debe Devolver</th><th>Acciones</th></tr>';
+                html += '<table><tr><th>Nombre</th><th>Puesto</th><th>Sueldo Mensual</th><th>Adelantos Pendientes</th><th>Estado del Mes</th><th>Falta Pagar</th><th>Acciones</th></tr>';
+                
+                let totalFaltaPagar = 0;
+                let empleadosPagados = 0;
+                
                 datos.empleados.forEach((e, i) => {
                     const sueldoARS = (e.sueldo || 0) * datos.config.tipoCambioBNA;
-                    const totalAdelantos = (e.adelantos || []).reduce((s, a) => s + parseFloat(a.monto || 0), 0) * datos.config.tipoCambioBNA;
-                    const cantAdelantos = (e.adelantos || []).length;
+                    
+                    // Calcular adelantos PENDIENTES (que se descontarán)
+                    const adelantosPendientes = (e.adelantos || []).filter(a => a.estado === 'pendiente' && a.esDescuento);
+                    const totalAdelantosPendientes = adelantosPendientes.reduce((s, a) => s + parseFloat(a.monto || 0), 0) * datos.config.tipoCambioBNA;
+                    const cantAdelantos = adelantosPendientes.length;
+                    
+                    // Verificar si ya se pagó este mes
+                    const pagoEsteMes = (e.historialPagos || []).find(p => {
+                        const fechaPago = new Date(p.fecha);
+                        return fechaPago.getMonth() === mesActual && fechaPago.getFullYear() === añoActual;
+                    });
+                    
+                    const yaPagado = !!pagoEsteMes;
+                    const sueldoNeto = sueldoARS - totalAdelantosPendientes;
+                    const faltaPagar = yaPagado ? 0 : sueldoNeto;
+                    
+                    if (yaPagado) empleadosPagados++;
+                    totalFaltaPagar += faltaPagar;
                     
                     html += `<tr>
                         <td><b>${e.nombre}</b></td>
                         <td>${e.puesto || '-'}</td>
-                        <td>$${Math.round(sueldoARS).toLocaleString('es-AR')} ARS</td>
-                        <td><span class="badge badge-info">${cantAdelantos} adelantos</span></td>
-                        <td><span class="badge ${totalAdelantos > 0 ? 'badge-fijo' : 'badge-variable'}" style="background: ${totalAdelantos > 0 ? '#ffc107' : '#28a745'};"><b>$${Math.round(totalAdelantos).toLocaleString('es-AR')} ARS</b></span></td>
+                        <td>$${Math.round(sueldoARS).toLocaleString('es-AR')}</td>
                         <td>
-                            <button class="btn btn-success btn-sm" onclick="abrirModalPagarSueldo(${i})" title="Pagar sueldo">💰 Pagar</button>
+                            ${cantAdelantos > 0 ? 
+                                `<span class="badge" style="background: #ffc107; color: #000;">${cantAdelantos} adelanto${cantAdelantos > 1 ? 's' : ''}: -$${Math.round(totalAdelantosPendientes).toLocaleString('es-AR')}</span>` : 
+                                '<span class="badge" style="background: #28a745;">Sin adelantos</span>'}
+                        </td>
+                        <td>
+                            ${yaPagado ? 
+                                `<span class="badge" style="background: #28a745;">✅ PAGADO</span><br><small style="color:#666;">$${Math.round((pagoEsteMes.sueldoNeto || 0) * datos.config.tipoCambioBNA).toLocaleString('es-AR')} el ${pagoEsteMes.fecha}</small>` : 
+                                '<span class="badge" style="background: #dc3545;">❌ PENDIENTE</span>'}
+                        </td>
+                        <td style="font-weight: bold; font-size: 1.1em; color: ${faltaPagar > 0 ? '#dc3545' : '#28a745'};">
+                            ${faltaPagar > 0 ? 
+                                `$${Math.round(faltaPagar).toLocaleString('es-AR')}` : 
+                                '✅ $0'}
+                        </td>
+                        <td>
+                            <button class="btn btn-success btn-sm" onclick="abrirModalPagarSueldo(${i})" title="Pagar sueldo" ${yaPagado ? 'disabled style="opacity:0.5;"' : ''}>💰 Pagar</button>
                             <button class="btn btn-info btn-sm" onclick="abrirModalAdelanto(${i})" title="Agregar adelanto">💵 Adelanto</button>
-                            <button class="btn btn-warning btn-sm" onclick="verAdelantosEmpleado(${i})" title="Ver adelantos">👁️</button>
+                            <button class="btn btn-warning btn-sm" onclick="verHistorialEmpleado(${i})" title="Ver historial">👁️</button>
                             <button class="btn btn-danger btn-sm" onclick="eliminarEmpleado(${i})">🗑️</button>
                         </td>
                     </tr>`;
@@ -3138,13 +3344,37 @@ function transferirEntreCajas() {
                 html += '</table>';
                 
                 const sueldosTotales = datos.empleados.reduce((sum, e) => sum + ((e.sueldo || 0) * datos.config.tipoCambioBNA), 0);
-                const adelantosTotales = datos.empleados.reduce((sum, e) => sum + ((e.adelantos || []).reduce((s, a) => s + parseFloat(a.monto || 0), 0) * datos.config.tipoCambioBNA), 0);
+                const adelantosTotales = datos.empleados.reduce((sum, e) => {
+                    const pendientes = (e.adelantos || []).filter(a => a.estado === 'pendiente' && a.esDescuento);
+                    return sum + (pendientes.reduce((s, a) => s + parseFloat(a.monto || 0), 0) * datos.config.tipoCambioBNA);
+                }, 0);
                 
-                html += `<div class="alert alert-success" style="margin-top: 15px;">
-                    <b>💰 Total Nómina Mensual:</b> $${Math.round(sueldosTotales).toLocaleString('es-AR')} ARS<br>
-                    <b>💵 Total Adelantos Pendientes:</b> $${Math.round(adelantosTotales).toLocaleString('es-AR')} ARS<br>
-                    <b>📊 Nómina Neta (después de descontar adelantos):</b> $${Math.round(sueldosTotales - adelantosTotales).toLocaleString('es-AR')} ARS
+                html += `<div class="grid-3" style="margin-top: 20px;">
+                    <div class="alert" style="background: #e3f2fd; border-color: #2196f3;">
+                        <b>💼 Nómina Mensual Total:</b><br>
+                        <span style="font-size: 1.3em;">$${Math.round(sueldosTotales).toLocaleString('es-AR')}</span>
+                    </div>
+                    <div class="alert" style="background: #fff3e0; border-color: #ff9800;">
+                        <b>💵 Adelantos a Descontar:</b><br>
+                        <span style="font-size: 1.3em;">-$${Math.round(adelantosTotales).toLocaleString('es-AR')}</span>
+                    </div>
+                    <div class="alert" style="background: ${totalFaltaPagar > 0 ? '#ffebee' : '#e8f5e9'}; border-color: ${totalFaltaPagar > 0 ? '#f44336' : '#4caf50'};">
+                        <b>📊 FALTA PAGAR (${nombreMes}):</b><br>
+                        <span style="font-size: 1.5em; font-weight: bold; color: ${totalFaltaPagar > 0 ? '#c62828' : '#2e7d32'};">
+                            $${Math.round(totalFaltaPagar).toLocaleString('es-AR')}
+                        </span>
+                        <br><small>${empleadosPagados}/${datos.empleados.length} empleados pagados</small>
+                    </div>
                 </div>`;
+                
+                // Botón para pagar todos
+                if (totalFaltaPagar > 0) {
+                    html += `<div style="text-align: center; margin-top: 15px;">
+                        <button class="btn btn-success" onclick="pagarTodosSueldos()" style="padding: 15px 40px; font-size: 1.1em;">
+                            💰 PAGAR TODOS LOS SUELDOS PENDIENTES ($${Math.round(totalFaltaPagar).toLocaleString('es-AR')})
+                        </button>
+                    </div>`;
+                }
             }
             
             html += '</div>';
@@ -3401,6 +3631,192 @@ function transferirEntreCajas() {
             notif(`✅ Sueldo pagado a ${empleado.nombre}: $${Math.round(sueldoNeto).toLocaleString('es-AR')} ARS (${metodosTexto[metodoPago]})`, 'success');
         }
         // ============= FIN FUNCIONES PAGAR SUELDO =============
+
+        function verHistorialEmpleado(i) {
+            if (!datos.empleados[i]) return;
+            
+            const empleado = datos.empleados[i];
+            const adelantos = empleado.adelantos || [];
+            const historialPagos = empleado.historialPagos || [];
+            const sueldoARS = (empleado.sueldo || 0) * datos.config.tipoCambioBNA;
+            
+            // Calcular adelantos pendientes
+            const adelantosPendientes = adelantos.filter(a => a.estado === 'pendiente' && a.esDescuento);
+            const totalAdelantosPendientes = adelantosPendientes.reduce((s, a) => s + parseFloat(a.monto || 0), 0) * datos.config.tipoCambioBNA;
+            
+            let html = `
+                <div style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 9998; display: flex; align-items: center; justify-content: center;">
+                    <div style="background: white; padding: 30px; border-radius: 12px; box-shadow: 0 8px 32px rgba(0,0,0,0.2); max-width: 800px; width: 95%; max-height: 85vh; overflow-y: auto;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                            <h3 style="margin: 0;">👤 ${empleado.nombre} - ${empleado.puesto || 'Sin puesto'}</h3>
+                            <button onclick="this.parentElement.parentElement.parentElement.remove()" style="background: none; border: none; font-size: 24px; cursor: pointer;">✕</button>
+                        </div>
+
+                        <div class="grid-4" style="margin-bottom: 20px;">
+                            <div class="card">
+                                <div class="card-value">$${Math.round(sueldoARS).toLocaleString('es-AR')}</div>
+                                <div class="card-label">💼 Sueldo Mensual</div>
+                            </div>
+                            <div class="card" style="background: linear-gradient(135deg, #ffc107, #ff9800);">
+                                <div class="card-value">$${Math.round(totalAdelantosPendientes).toLocaleString('es-AR')}</div>
+                                <div class="card-label">💵 Adelantos Pendientes</div>
+                            </div>
+                            <div class="card" style="background: ${(sueldoARS - totalAdelantosPendientes) >= 0 ? 'linear-gradient(135deg, #28a745, #20c997)' : 'linear-gradient(135deg, #dc3545, #c82333)'};">
+                                <div class="card-value">$${Math.round(sueldoARS - totalAdelantosPendientes).toLocaleString('es-AR')}</div>
+                                <div class="card-label">📊 Neto a Pagar</div>
+                            </div>
+                            <div class="card" style="background: linear-gradient(135deg, #667eea, #764ba2);">
+                                <div class="card-value">${historialPagos.length}</div>
+                                <div class="card-label">📋 Pagos Realizados</div>
+                            </div>
+                        </div>
+
+                        <h4 style="margin: 20px 0 10px; border-bottom: 2px solid #667eea; padding-bottom: 5px;">📋 Historial de Pagos de Sueldos</h4>
+                        ${historialPagos.length === 0 ? 
+                            '<div class="alert alert-info">📭 Sin pagos registrados aún</div>' : 
+                            `<table style="width: 100%; font-size: 13px;">
+                                <tr>
+                                    <th>Fecha</th>
+                                    <th style="text-align: right;">Bruto</th>
+                                    <th style="text-align: right;">Descuentos</th>
+                                    <th style="text-align: right;">Neto Pagado</th>
+                                    <th>Método</th>
+                                    <th>Observaciones</th>
+                                </tr>
+                                ${historialPagos.slice().reverse().map(p => {
+                                    const brutoARS = (p.sueldoBruto || 0) * datos.config.tipoCambioBNA;
+                                    const descARS = (p.descuentos || 0) * datos.config.tipoCambioBNA;
+                                    const netoARS = (p.sueldoNeto || 0) * datos.config.tipoCambioBNA;
+                                    return `<tr>
+                                        <td>${new Date(p.fecha).toLocaleDateString('es-AR')}</td>
+                                        <td style="text-align: right;">$${Math.round(brutoARS).toLocaleString('es-AR')}</td>
+                                        <td style="text-align: right; color: #dc3545;">-$${Math.round(descARS).toLocaleString('es-AR')}</td>
+                                        <td style="text-align: right; font-weight: bold; color: #28a745;">$${Math.round(netoARS).toLocaleString('es-AR')}</td>
+                                        <td>${p.metodoPago === 'efectivo' ? '💵 Efectivo' : p.metodoPago === 'transferencia' ? '🏦 Transferencia' : '📄 Cheque'}</td>
+                                        <td>${p.observaciones || '-'}</td>
+                                    </tr>`;
+                                }).join('')}
+                            </table>`
+                        }
+
+                        <h4 style="margin: 20px 0 10px; border-bottom: 2px solid #ffc107; padding-bottom: 5px;">💵 Adelantos</h4>
+                        ${adelantos.length === 0 ? 
+                            '<div class="alert alert-success">✅ Sin adelantos registrados</div>' : 
+                            `<table style="width: 100%; font-size: 13px;">
+                                <tr>
+                                    <th>Fecha</th>
+                                    <th>Concepto</th>
+                                    <th style="text-align: right;">Monto</th>
+                                    <th style="text-align: center;">Tipo</th>
+                                    <th style="text-align: center;">Estado</th>
+                                    <th style="text-align: center;">Acción</th>
+                                </tr>
+                                ${adelantos.map((a, idx) => {
+                                    const montoARS = (a.monto || 0) * datos.config.tipoCambioBNA;
+                                    const estadoColor = a.estado === 'descontado' ? '#28a745' : a.estado === 'pagado' ? '#17a2b8' : '#ffc107';
+                                    const estadoTexto = a.estado === 'descontado' ? '✅ Descontado' : a.estado === 'pagado' ? '✅ Pagado' : '⏳ Pendiente';
+                                    return `<tr style="${a.estado !== 'pendiente' ? 'opacity: 0.6;' : ''}">
+                                        <td>${new Date(a.fecha).toLocaleDateString('es-AR')}</td>
+                                        <td>${a.concepto}</td>
+                                        <td style="text-align: right;"><b>$${Math.round(montoARS).toLocaleString('es-AR')}</b></td>
+                                        <td style="text-align: center;">${a.esDescuento ? '📉 Descuento' : '⏳ Deuda'}</td>
+                                        <td style="text-align: center;"><span class="badge" style="background: ${estadoColor}; color: white;">${estadoTexto}</span></td>
+                                        <td style="text-align: center;">
+                                            ${a.estado === 'pendiente' ? `<button class="btn btn-sm btn-success" onclick="marcarAdelantoPagado(${i}, ${idx}); this.closest('[style*=position]').remove();" style="padding: 4px 8px; font-size: 11px;">✅</button>` : ''}
+                                            <button class="btn btn-sm btn-danger" onclick="eliminarAdelanto(${i}, ${idx}); this.closest('[style*=position]').remove();" style="padding: 4px 8px; font-size: 11px;">🗑️</button>
+                                        </td>
+                                    </tr>`;
+                                }).join('')}
+                            </table>`
+                        }
+                    </div>
+                </div>
+            `;
+            
+            const modal = document.createElement('div');
+            modal.innerHTML = html;
+            document.body.appendChild(modal);
+        }
+
+        // Función para pagar todos los sueldos pendientes
+        function pagarTodosSueldos() {
+            const mesActual = new Date().getMonth();
+            const añoActual = new Date().getFullYear();
+            
+            const empleadosPendientes = datos.empleados.filter(e => {
+                const pagoEsteMes = (e.historialPagos || []).find(p => {
+                    const fechaPago = new Date(p.fecha);
+                    return fechaPago.getMonth() === mesActual && fechaPago.getFullYear() === añoActual;
+                });
+                return !pagoEsteMes;
+            });
+            
+            if (empleadosPendientes.length === 0) {
+                notif('✅ Todos los sueldos ya fueron pagados este mes', 'success');
+                return;
+            }
+            
+            // Calcular total
+            let totalAPagar = 0;
+            empleadosPendientes.forEach(e => {
+                const sueldoARS = (e.sueldo || 0) * datos.config.tipoCambioBNA;
+                const adelantosPendientes = (e.adelantos || []).filter(a => a.estado === 'pendiente' && a.esDescuento);
+                const totalAdelantos = adelantosPendientes.reduce((s, a) => s + parseFloat(a.monto || 0), 0) * datos.config.tipoCambioBNA;
+                totalAPagar += (sueldoARS - totalAdelantos);
+            });
+            
+            if (!confirm(`¿Confirmar pago de ${empleadosPendientes.length} sueldo(s) por un total de $${Math.round(totalAPagar).toLocaleString('es-AR')} ARS?`)) {
+                return;
+            }
+            
+            const fechaPago = new Date().toISOString().split('T')[0];
+            const metodoPago = 'transferencia'; // Por defecto transferencia
+            
+            empleadosPendientes.forEach(e => {
+                const idx = datos.empleados.indexOf(e);
+                const sueldoUSD = e.sueldo || 0;
+                const adelantosPendientes = (e.adelantos || []).filter(a => a.estado === 'pendiente' && a.esDescuento);
+                const totalAdelantosUSD = adelantosPendientes.reduce((s, a) => s + parseFloat(a.monto || 0), 0);
+                const sueldoNetoUSD = sueldoUSD - totalAdelantosUSD;
+                
+                // Marcar adelantos como descontados
+                if (e.adelantos) {
+                    e.adelantos.forEach(a => {
+                        if (a.estado === 'pendiente' && a.esDescuento) {
+                            a.estado = 'descontado';
+                            a.fechaDescuento = fechaPago;
+                        }
+                    });
+                }
+                
+                // Registrar en historial
+                if (!e.historialPagos) e.historialPagos = [];
+                e.historialPagos.push({
+                    fecha: fechaPago,
+                    sueldoBruto: sueldoUSD,
+                    descuentos: totalAdelantosUSD,
+                    sueldoNeto: sueldoNetoUSD,
+                    metodoPago: metodoPago,
+                    observaciones: 'Pago masivo'
+                });
+                
+                // Registrar como gasto
+                datos.gastos.push({
+                    monto: sueldoNetoUSD,
+                    fecha: fechaPago,
+                    desc: `Sueldo ${e.nombre}`,
+                    metodo: metodoPago,
+                    cat: 'Sueldos',
+                    esVariable: false
+                });
+            });
+            
+            guardarDatos();
+            mostrarEmpleados();
+            actualizarDash();
+            
+            notif(`✅ Se pagaron ${empleadosPendientes.length} sueldo(s) por $${Math.round(totalAPagar).toLocaleString('es-AR')} ARS`, 'success');
+        }
 
         function verAdelantosEmpleado(i) {
             if (!datos.empleados[i]) return;
