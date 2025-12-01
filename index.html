@@ -4289,9 +4289,13 @@ function transferirEntreCajas() {
                 return;
             }
             
-            // Crear el movimiento
+            // Crear el movimiento con ID único
+            const movimientoId = Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+            const fechaHoy = new Date().toISOString().split('T')[0];
+            
             const movimiento = {
-                fecha: new Date().toISOString().split('T')[0],
+                id: movimientoId,
+                fecha: fechaHoy,
                 tipo: tipo,
                 cajaOrigenIdx: cajaOrigenIdx,
                 cajaOrigen: datos.cajas[cajaOrigenIdx].nombre,
@@ -4312,25 +4316,52 @@ function transferirEntreCajas() {
             if (tipo === 'ingreso') {
                 datos.cajas[cajaOrigenIdx].monto += montoUSD;
                 datos.cajas[cajaOrigenIdx].movimientos.push({
-                    fecha: new Date().toISOString().split('T')[0],
+                    fecha: fechaHoy,
                     tipo: 'entrada',
                     monto: montoUSD,
                     motivo: descripcion || 'Ingreso desde Movimientos'
                 });
+                
+                // NUEVO: Registrar también en Ingresos
+                datos.ingresos.push({
+                    movimientoId: movimientoId,
+                    monto: montoUSD,
+                    montoBruto: montoUSD,
+                    retencion: 0,
+                    fecha: fechaHoy,
+                    desc: descripcion || 'Ingreso - ' + datos.cajas[cajaOrigenIdx].nombre,
+                    metodo: datos.cajas[cajaOrigenIdx].nombre,
+                    cat: 'Movimiento de Caja',
+                    desdeMovimientos: true
+                });
+                
             } else if (tipo === 'egreso') {
                 datos.cajas[cajaOrigenIdx].monto -= montoUSD;
                 datos.cajas[cajaOrigenIdx].movimientos.push({
-                    fecha: new Date().toISOString().split('T')[0],
+                    fecha: fechaHoy,
                     tipo: 'salida',
                     monto: montoUSD,
                     motivo: descripcion || 'Egreso desde Movimientos'
                 });
+                
+                // NUEVO: Registrar también en Gastos
+                datos.gastos.push({
+                    movimientoId: movimientoId,
+                    monto: montoUSD,
+                    fecha: fechaHoy,
+                    desc: descripcion || 'Egreso - ' + datos.cajas[cajaOrigenIdx].nombre,
+                    metodo: datos.cajas[cajaOrigenIdx].nombre,
+                    cat: 'Movimiento de Caja',
+                    esVariable: true,
+                    desdeMovimientos: true
+                });
+                
             } else if (tipo === 'transferencia') {
                 if (!datos.cajas[cajaDestinoIdx].movimientos) datos.cajas[cajaDestinoIdx].movimientos = [];
                 
                 datos.cajas[cajaOrigenIdx].monto -= montoUSD;
                 datos.cajas[cajaOrigenIdx].movimientos.push({
-                    fecha: new Date().toISOString().split('T')[0],
+                    fecha: fechaHoy,
                     tipo: 'salida',
                     monto: montoUSD,
                     motivo: '🔄 Transferencia a ' + datos.cajas[cajaDestinoIdx].nombre + (descripcion ? ' - ' + descripcion : '')
@@ -4338,11 +4369,12 @@ function transferirEntreCajas() {
                 
                 datos.cajas[cajaDestinoIdx].monto += montoUSD;
                 datos.cajas[cajaDestinoIdx].movimientos.push({
-                    fecha: new Date().toISOString().split('T')[0],
+                    fecha: fechaHoy,
                     tipo: 'entrada',
                     monto: montoUSD,
                     motivo: '🔄 Transferencia desde ' + datos.cajas[cajaOrigenIdx].nombre + (descripcion ? ' - ' + descripcion : '')
                 });
+                // Las transferencias NO se registran en gastos/ingresos (es movimiento interno)
             }
             
             datos.movimientos.push(movimiento);
@@ -4368,7 +4400,7 @@ function transferirEntreCajas() {
         }
 
         function eliminarMovimientoFondos(i) {
-            if (confirm('¿Eliminar este movimiento? Esto revertirá el cambio en los saldos y eliminará del historial de las cajas.')) {
+            if (confirm('¿Eliminar este movimiento? Esto revertirá el cambio en los saldos, cajas, gastos e ingresos.')) {
                 const mov = datos.movimientos[i];
                 
                 // Revertir el cambio en saldos de cajas y eliminar del historial
@@ -4382,6 +4414,11 @@ function transferirEntreCajas() {
                             );
                             if (idx !== -1) datos.cajas[mov.cajaOrigenIdx].movimientos.splice(idx, 1);
                         }
+                        // NUEVO: Eliminar de Ingresos
+                        if (mov.id) {
+                            const idxIngreso = datos.ingresos.findIndex(ing => ing.movimientoId === mov.id);
+                            if (idxIngreso !== -1) datos.ingresos.splice(idxIngreso, 1);
+                        }
                     } else if (mov.tipo === 'egreso') {
                         datos.cajas[mov.cajaOrigenIdx].monto += mov.monto;
                         // Eliminar del historial de la caja
@@ -4390,6 +4427,11 @@ function transferirEntreCajas() {
                                 m.fecha === mov.fecha && Math.abs(m.monto - mov.monto) < 0.01 && (m.tipo === 'salida' || m.tipo === 'egreso')
                             );
                             if (idx !== -1) datos.cajas[mov.cajaOrigenIdx].movimientos.splice(idx, 1);
+                        }
+                        // NUEVO: Eliminar de Gastos
+                        if (mov.id) {
+                            const idxGasto = datos.gastos.findIndex(g => g.movimientoId === mov.id);
+                            if (idxGasto !== -1) datos.gastos.splice(idxGasto, 1);
                         }
                     } else if (mov.tipo === 'transferencia' && mov.cajaDestinoIdx !== undefined && datos.cajas[mov.cajaDestinoIdx]) {
                         datos.cajas[mov.cajaOrigenIdx].monto += mov.monto;
@@ -4413,6 +4455,7 @@ function transferirEntreCajas() {
                 datos.movimientos.splice(i, 1);
                 guardarDatos();
                 mostrarMovimientos();
+                actualizarDash();
                 notif('✅ Movimiento eliminado y saldos actualizados', 'success');
             }
         }
