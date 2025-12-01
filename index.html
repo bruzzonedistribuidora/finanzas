@@ -6669,6 +6669,7 @@ Responde de forma clara, práctica y en español argentino. Si te preguntan tér
         ];
         
         function cargarUsuarios() {
+            // Primero cargar de localStorage como fallback
             const guardados = localStorage.getItem('sistemaFinanciero_usuarios');
             if (guardados) {
                 usuarios = JSON.parse(guardados);
@@ -6680,16 +6681,54 @@ Responde de forma clara, práctica y en español argentino. Si te preguntan tér
                     password: 'admin123',
                     nombre: 'Administrador',
                     rol: 'admin',
-                    permisos: todasLasVentanas.map(v => v.id), // Todos los permisos
+                    permisos: todasLasVentanas.map(v => v.id),
                     activo: true,
                     fechaCreacion: new Date().toISOString()
                 }];
                 guardarUsuarios();
             }
+            
+            // Si Firebase está activo, cargar desde allí
+            if (firebaseActivo) {
+                db.collection('sistema').doc('usuarios').get().then(function(doc) {
+                    if (doc.exists && doc.data().items && doc.data().items.length > 0) {
+                        usuarios = doc.data().items;
+                        localStorage.setItem('sistemaFinanciero_usuarios', JSON.stringify(usuarios));
+                        console.log('✅ Usuarios cargados desde Firebase:', usuarios.length);
+                    } else {
+                        // No hay usuarios en Firebase, guardar los actuales
+                        guardarUsuarios();
+                    }
+                }).catch(function(err) {
+                    console.log('⚠️ Error cargando usuarios de Firebase:', err);
+                });
+                
+                // Escuchar cambios en tiempo real
+                db.collection('sistema').doc('usuarios').onSnapshot(function(doc) {
+                    if (doc.exists && doc.data().items) {
+                        usuarios = doc.data().items;
+                        localStorage.setItem('sistemaFinanciero_usuarios', JSON.stringify(usuarios));
+                        console.log('🔄 Usuarios sincronizados desde Firebase');
+                    }
+                });
+            }
         }
         
         function guardarUsuarios() {
+            // Guardar en localStorage
             localStorage.setItem('sistemaFinanciero_usuarios', JSON.stringify(usuarios));
+            
+            // Guardar en Firebase si está activo
+            if (firebaseActivo) {
+                db.collection('sistema').doc('usuarios').set({
+                    items: usuarios,
+                    ultimaActualizacion: new Date().toISOString()
+                }).then(function() {
+                    console.log('✅ Usuarios guardados en Firebase');
+                }).catch(function(err) {
+                    console.log('⚠️ Error guardando usuarios en Firebase:', err);
+                });
+            }
         }
         
         function intentarLogin() {
