@@ -4576,6 +4576,9 @@ function transferirEntreCajas() {
         }
 
         // ============ GRÁFICOS ============
+        // Variable global para el año seleccionado en gráficos
+        let añoSeleccionadoGrafico = new Date().getFullYear();
+        
         function mostrarGraficos() {
             const ingresosFiltrados = aplicarFiltros(datos.ingresos);
             const gastosFiltrados = aplicarFiltros(datos.gastos);
@@ -4583,45 +4586,59 @@ function transferirEntreCajas() {
             const totalIngresos = ingresosFiltrados.reduce((s, i) => s + parseFloat(i.monto || 0), 0);
             const totalGastos = gastosFiltrados.reduce((s, g) => s + parseFloat(g.monto || 0), 0);
             
-            // Preparar datos por mes - FILTRAR POR AÑO
-            const meses = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
-            const ingresoPorMes = [];
-            const gastoPorMes = [];
-            const balancePorMes = [];
-            
-            // Determinar el año a mostrar (del filtro o actual)
+            // Obtener años disponibles en los datos
+            const añosDisponibles = obtenerAñosDisponibles();
             const añoActual = new Date().getFullYear();
-            let añoGrafico = añoActual;
             
-            // Si hay filtro de período personalizado, usar ese año
-            const periodoActual = datos.config.periodoFiltro;
-            if (periodoActual === 'personalizado' && datos.config.fechaDesde) {
-                añoGrafico = new Date(datos.config.fechaDesde).getFullYear();
+            // Usar el año seleccionado o el actual
+            let añoGrafico = añoSeleccionadoGrafico || añoActual;
+            if (!añosDisponibles.includes(añoGrafico)) {
+                añoGrafico = añosDisponibles[0] || añoActual;
             }
             
-            meses.forEach((mes, idx) => {
-                // Filtrar por mes Y año
-                const ing = datos.ingresos.filter(i => {
-                    const fecha = new Date(i.fecha);
-                    return fecha.getMonth() === idx && fecha.getFullYear() === añoGrafico;
-                }).reduce((s, i) => s + (parseFloat(i.monto || 0)), 0);
-                
-                const gast = datos.gastos.filter(g => {
-                    const fecha = new Date(g.fecha);
-                    return fecha.getMonth() === idx && fecha.getFullYear() === añoGrafico;
-                }).reduce((s, g) => s + (parseFloat(g.monto || 0)), 0);
-                
-                const comp = datos.compras.filter(c => {
-                    const fecha = new Date(c.fecha);
-                    return fecha.getMonth() === idx && fecha.getFullYear() === añoGrafico;
-                }).reduce((s, c) => s + (parseFloat(c.monto || 0)), 0);
-                
-                ingresoPorMes.push(Math.round(ing * datos.config.tipoCambioBNA));
-                gastoPorMes.push(Math.round((gast + comp) * datos.config.tipoCambioBNA));
-                balancePorMes.push(Math.round((ing - gast - comp) * datos.config.tipoCambioBNA));
-            });
+            const meses = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+            const mesesCompletos = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+            
+            // Datos del año seleccionado
+            const datosAño = calcularDatosPorMes(añoGrafico);
+            
+            // Datos del año anterior para comparativo
+            const añoAnterior = añoGrafico - 1;
+            const datosAñoAnterior = calcularDatosPorMes(añoAnterior);
             
             let html = obtenerBadgePeriodo();
+            
+            // Selector de año
+            html += '<div class="section" style="margin-bottom: 20px;">';
+            html += '<div style="display: flex; align-items: center; gap: 15px; flex-wrap: wrap;">';
+            html += '<h3 style="margin: 0;">📅 Seleccionar Año:</h3>';
+            html += '<select id="selectorAñoGrafico" onchange="cambiarAñoGrafico(this.value)" style="padding: 10px 20px; font-size: 16px; border-radius: 8px; border: 2px solid #667eea; background: white; cursor: pointer;">';
+            añosDisponibles.forEach(año => {
+                html += `<option value="${año}" ${año === añoGrafico ? 'selected' : ''}>${año}</option>`;
+            });
+            html += '</select>';
+            
+            // Totales del año
+            const totalIngAño = datosAño.ingresos.reduce((a, b) => a + b, 0);
+            const totalGastAño = datosAño.gastos.reduce((a, b) => a + b, 0);
+            const balanceAño = totalIngAño - totalGastAño;
+            
+            html += `<div style="display: flex; gap: 20px; margin-left: auto;">
+                <div style="background: #d4edda; padding: 10px 15px; border-radius: 8px;">
+                    <small>Ingresos ${añoGrafico}</small><br>
+                    <b style="color: #155724;">$${Math.round(totalIngAño).toLocaleString('es-AR')}</b>
+                </div>
+                <div style="background: #f8d7da; padding: 10px 15px; border-radius: 8px;">
+                    <small>Gastos ${añoGrafico}</small><br>
+                    <b style="color: #721c24;">$${Math.round(totalGastAño).toLocaleString('es-AR')}</b>
+                </div>
+                <div style="background: ${balanceAño >= 0 ? '#d4edda' : '#f8d7da'}; padding: 10px 15px; border-radius: 8px;">
+                    <small>Balance ${añoGrafico}</small><br>
+                    <b style="color: ${balanceAño >= 0 ? '#155724' : '#721c24'};">$${Math.round(balanceAño).toLocaleString('es-AR')}</b>
+                </div>
+            </div>`;
+            html += '</div></div>';
+            
             html += '<div class="grid-2">';
             
             html += '<div class="section"><h3>💹 Ingresos vs Gastos</h3>';
@@ -4632,8 +4649,72 @@ function transferirEntreCajas() {
             
             html += '</div>';
             
-            html += '<div class="section"><h3>📈 Comparación Mensual (Ingresos, Gastos, Balance) - Año ' + añoGrafico + '</h3>';
+            // Gráfico mensual del año seleccionado
+            html += `<div class="section"><h3>📈 Evolución Mensual - ${añoGrafico}</h3>`;
             html += '<div class="chart-container" style="height: 400px;"><canvas id="chartMeses"></canvas></div></div>';
+            
+            // Gráfico comparativo entre años
+            if (añosDisponibles.length > 1) {
+                html += `<div class="section"><h3>📊 Comparativo: ${añoGrafico} vs ${añoAnterior}</h3>`;
+                html += '<div class="chart-container" style="height: 400px;"><canvas id="chartComparativoAnual"></canvas></div></div>';
+                
+                // Tabla comparativa
+                html += `<div class="section"><h3>📋 Resumen Comparativo Anual</h3>`;
+                html += '<table><thead><tr><th>Mes</th>';
+                html += `<th style="background:#d4edda;">Ingresos ${añoAnterior}</th>`;
+                html += `<th style="background:#c3e6cb;">Ingresos ${añoGrafico}</th>`;
+                html += `<th style="background:#f8d7da;">Gastos ${añoAnterior}</th>`;
+                html += `<th style="background:#f5c6cb;">Gastos ${añoGrafico}</th>`;
+                html += `<th>Variación Ingresos</th>`;
+                html += `<th>Variación Gastos</th>`;
+                html += '</tr></thead><tbody>';
+                
+                mesesCompletos.forEach((mes, idx) => {
+                    const ingAnt = datosAñoAnterior.ingresos[idx];
+                    const ingAct = datosAño.ingresos[idx];
+                    const gastAnt = datosAñoAnterior.gastos[idx];
+                    const gastAct = datosAño.gastos[idx];
+                    
+                    const varIng = ingAnt > 0 ? ((ingAct - ingAnt) / ingAnt * 100) : (ingAct > 0 ? 100 : 0);
+                    const varGast = gastAnt > 0 ? ((gastAct - gastAnt) / gastAnt * 100) : (gastAct > 0 ? 100 : 0);
+                    
+                    html += `<tr>
+                        <td><b>${mes}</b></td>
+                        <td>$${Math.round(ingAnt).toLocaleString('es-AR')}</td>
+                        <td>$${Math.round(ingAct).toLocaleString('es-AR')}</td>
+                        <td>$${Math.round(gastAnt).toLocaleString('es-AR')}</td>
+                        <td>$${Math.round(gastAct).toLocaleString('es-AR')}</td>
+                        <td style="color: ${varIng >= 0 ? '#28a745' : '#dc3545'}; font-weight: bold;">
+                            ${varIng >= 0 ? '↑' : '↓'} ${Math.abs(varIng).toFixed(1)}%
+                        </td>
+                        <td style="color: ${varGast <= 0 ? '#28a745' : '#dc3545'}; font-weight: bold;">
+                            ${varGast >= 0 ? '↑' : '↓'} ${Math.abs(varGast).toFixed(1)}%
+                        </td>
+                    </tr>`;
+                });
+                
+                // Fila de totales
+                const totalIngAnt = datosAñoAnterior.ingresos.reduce((a, b) => a + b, 0);
+                const totalGastAnt = datosAñoAnterior.gastos.reduce((a, b) => a + b, 0);
+                const varIngTotal = totalIngAnt > 0 ? ((totalIngAño - totalIngAnt) / totalIngAnt * 100) : 0;
+                const varGastTotal = totalGastAnt > 0 ? ((totalGastAño - totalGastAnt) / totalGastAnt * 100) : 0;
+                
+                html += `<tr style="background: #f8f9fa; font-weight: bold;">
+                    <td>TOTAL</td>
+                    <td>$${Math.round(totalIngAnt).toLocaleString('es-AR')}</td>
+                    <td>$${Math.round(totalIngAño).toLocaleString('es-AR')}</td>
+                    <td>$${Math.round(totalGastAnt).toLocaleString('es-AR')}</td>
+                    <td>$${Math.round(totalGastAño).toLocaleString('es-AR')}</td>
+                    <td style="color: ${varIngTotal >= 0 ? '#28a745' : '#dc3545'};">
+                        ${varIngTotal >= 0 ? '↑' : '↓'} ${Math.abs(varIngTotal).toFixed(1)}%
+                    </td>
+                    <td style="color: ${varGastTotal <= 0 ? '#28a745' : '#dc3545'};">
+                        ${varGastTotal >= 0 ? '↑' : '↓'} ${Math.abs(varGastTotal).toFixed(1)}%
+                    </td>
+                </tr>`;
+                
+                html += '</tbody></table></div>';
+            }
             
             document.getElementById('panelGraficos').innerHTML = html;
             
@@ -4703,7 +4784,7 @@ function transferirEntreCajas() {
                     }
                 }
                 
-                // Gráfico 3: Comparación Mensual (Líneas)
+                // Gráfico 3: Evolución Mensual (Líneas)
                 const ctx3 = document.getElementById('chartMeses');
                 if (ctx3) {
                     new Chart(ctx3, {
@@ -4713,7 +4794,7 @@ function transferirEntreCajas() {
                             datasets: [
                                 {
                                     label: '💰 Ingresos (ARS)',
-                                    data: ingresoPorMes,
+                                    data: datosAño.ingresos,
                                     borderColor: '#28a745',
                                     backgroundColor: 'rgba(40, 167, 69, 0.1)',
                                     tension: 0.4,
@@ -4724,7 +4805,7 @@ function transferirEntreCajas() {
                                 },
                                 {
                                     label: '📤 Gastos + Compras (ARS)',
-                                    data: gastoPorMes,
+                                    data: datosAño.gastos,
                                     borderColor: '#dc3545',
                                     backgroundColor: 'rgba(220, 53, 69, 0.1)',
                                     tension: 0.4,
@@ -4735,7 +4816,7 @@ function transferirEntreCajas() {
                                 },
                                 {
                                     label: '📊 Balance (ARS)',
-                                    data: balancePorMes,
+                                    data: datosAño.balance,
                                     borderColor: '#667eea',
                                     backgroundColor: 'rgba(102, 126, 234, 0.1)',
                                     tension: 0.4,
@@ -4756,7 +4837,7 @@ function transferirEntreCajas() {
                                 },
                                 title: {
                                     display: true,
-                                    text: 'Evolución Mensual del Negocio - ' + añoGrafico
+                                    text: 'Evolución Mensual - ' + añoGrafico
                                 }
                             },
                             scales: {
@@ -4772,7 +4853,130 @@ function transferirEntreCajas() {
                         }
                     });
                 }
+                
+                // Gráfico 4: Comparativo Anual (Barras agrupadas)
+                const ctx4 = document.getElementById('chartComparativoAnual');
+                if (ctx4) {
+                    new Chart(ctx4, {
+                        type: 'bar',
+                        data: {
+                            labels: meses,
+                            datasets: [
+                                {
+                                    label: `Ingresos ${añoAnterior}`,
+                                    data: datosAñoAnterior.ingresos,
+                                    backgroundColor: 'rgba(40, 167, 69, 0.5)',
+                                    borderColor: '#28a745',
+                                    borderWidth: 1
+                                },
+                                {
+                                    label: `Ingresos ${añoGrafico}`,
+                                    data: datosAño.ingresos,
+                                    backgroundColor: 'rgba(40, 167, 69, 1)',
+                                    borderColor: '#155724',
+                                    borderWidth: 1
+                                },
+                                {
+                                    label: `Gastos ${añoAnterior}`,
+                                    data: datosAñoAnterior.gastos,
+                                    backgroundColor: 'rgba(220, 53, 69, 0.5)',
+                                    borderColor: '#dc3545',
+                                    borderWidth: 1
+                                },
+                                {
+                                    label: `Gastos ${añoGrafico}`,
+                                    data: datosAño.gastos,
+                                    backgroundColor: 'rgba(220, 53, 69, 1)',
+                                    borderColor: '#721c24',
+                                    borderWidth: 1
+                                }
+                            ]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: {
+                                    display: true,
+                                    position: 'top'
+                                },
+                                title: {
+                                    display: true,
+                                    text: `Comparativo ${añoAnterior} vs ${añoGrafico}`
+                                }
+                            },
+                            scales: {
+                                y: {
+                                    beginAtZero: true,
+                                    ticks: {
+                                        callback: function(value) {
+                                            return '$' + value.toLocaleString('es-AR');
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    });
+                }
             }, 100);
+        }
+        
+        // Función para obtener años disponibles
+        function obtenerAñosDisponibles() {
+            const años = new Set();
+            const añoActual = new Date().getFullYear();
+            años.add(añoActual);
+            
+            datos.ingresos.forEach(i => {
+                if (i.fecha) años.add(new Date(i.fecha).getFullYear());
+            });
+            datos.gastos.forEach(g => {
+                if (g.fecha) años.add(new Date(g.fecha).getFullYear());
+            });
+            datos.compras.forEach(c => {
+                if (c.fecha) años.add(new Date(c.fecha).getFullYear());
+            });
+            
+            return Array.from(años).sort((a, b) => b - a); // Ordenar desc
+        }
+        
+        // Función para calcular datos por mes de un año específico
+        function calcularDatosPorMes(año) {
+            const ingresos = [];
+            const gastos = [];
+            const balance = [];
+            
+            for (let mes = 0; mes < 12; mes++) {
+                const ing = datos.ingresos.filter(i => {
+                    const fecha = new Date(i.fecha);
+                    return fecha.getMonth() === mes && fecha.getFullYear() === año;
+                }).reduce((s, i) => s + (parseFloat(i.monto || 0)), 0);
+                
+                const gast = datos.gastos.filter(g => {
+                    const fecha = new Date(g.fecha);
+                    return fecha.getMonth() === mes && fecha.getFullYear() === año;
+                }).reduce((s, g) => s + (parseFloat(g.monto || 0)), 0);
+                
+                const comp = datos.compras.filter(c => {
+                    const fecha = new Date(c.fecha);
+                    return fecha.getMonth() === mes && fecha.getFullYear() === año;
+                }).reduce((s, c) => s + (parseFloat(c.monto || 0)), 0);
+                
+                const ingARS = Math.round(ing * datos.config.tipoCambioBNA);
+                const gastARS = Math.round((gast + comp) * datos.config.tipoCambioBNA);
+                
+                ingresos.push(ingARS);
+                gastos.push(gastARS);
+                balance.push(ingARS - gastARS);
+            }
+            
+            return { ingresos, gastos, balance };
+        }
+        
+        // Función para cambiar el año del gráfico
+        function cambiarAñoGrafico(año) {
+            añoSeleccionadoGrafico = parseInt(año);
+            mostrarGraficos();
         }
 
         // ============ PROYECCIONES ============
