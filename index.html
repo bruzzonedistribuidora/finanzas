@@ -1214,6 +1214,8 @@
             }
         }
 
+        let listenersActivos = false;
+
         function cargarDatos() {
             // Primero intentar cargar de Firebase
             if (firebaseActivo && db) {
@@ -1268,23 +1270,104 @@
                     } else {
                         cargarDatosLocal();
                     }
+                    
+                    // Activar listeners en tiempo real después de cargar
+                    if (!listenersActivos) {
+                        activarSincronizacionTiempoReal();
+                        listenersActivos = true;
+                    }
+                    
                 }).catch(function(error) {
                     console.error('Error al cargar de Firebase:', error);
                     cargarDatosLocal();
                 });
-                
-                // Escuchar cambios en config (para sincronización básica)
-                db.collection('sistema').doc('config').onSnapshot(function(doc) {
-                    if (doc.exists && !ignorarSnapshot) {
-                        const configData = doc.data();
-                        datos.config = configData.config || datos.config;
-                        datos.cajas = configData.cajas || datos.cajas;
-                        aplicarDatosCargados();
-                        console.log('🔄 Config actualizada en tiempo real');
-                    }
-                });
             } else {
                 cargarDatosLocal();
+            }
+        }
+        
+        // ============ SINCRONIZACIÓN EN TIEMPO REAL ============
+        function activarSincronizacionTiempoReal() {
+            if (!firebaseActivo || !db) return;
+            
+            // Listener para INGRESOS
+            db.collection('sistema').doc('ingresos').onSnapshot(function(doc) {
+                if (doc.exists && !ignorarSnapshot) {
+                    datos.ingresos = doc.data().items || [];
+                    actualizarVistaActual();
+                    console.log('🔄 Ingresos sincronizados');
+                }
+            });
+            
+            // Listener para GASTOS
+            db.collection('sistema').doc('gastos').onSnapshot(function(doc) {
+                if (doc.exists && !ignorarSnapshot) {
+                    datos.gastos = doc.data().items || [];
+                    actualizarVistaActual();
+                    console.log('🔄 Gastos sincronizados');
+                }
+            });
+            
+            // Listener para COMPRAS
+            db.collection('sistema').doc('compras').onSnapshot(function(doc) {
+                if (doc.exists && !ignorarSnapshot) {
+                    datos.compras = doc.data().items || [];
+                    actualizarVistaActual();
+                    console.log('🔄 Compras sincronizadas');
+                }
+            });
+            
+            // Listener para CONFIG (saldos, cajas, etc.)
+            db.collection('sistema').doc('config').onSnapshot(function(doc) {
+                if (doc.exists && !ignorarSnapshot) {
+                    const configData = doc.data();
+                    datos.config = configData.config || datos.config;
+                    datos.filtros = configData.filtros || datos.filtros;
+                    datos.saldos = configData.saldos || datos.saldos;
+                    datos.ahorros = configData.ahorros || datos.ahorros;
+                    datos.inversiones = configData.inversiones || datos.inversiones;
+                    actualizarVistaActual();
+                    console.log('🔄 Config sincronizada');
+                }
+            });
+            
+            // Listener para OTROS (movimientos, empleados, cajas, clientes, etc.)
+            db.collection('sistema').doc('otros').onSnapshot(function(doc) {
+                if (doc.exists && !ignorarSnapshot) {
+                    const otrosData = doc.data();
+                    datos.empleados = otrosData.empleados || [];
+                    datos.adelantos = otrosData.adelantos || [];
+                    datos.movimientos = otrosData.movimientos || [];
+                    datos.recordatorios = otrosData.recordatorios || [];
+                    datos.clientes = otrosData.clientes || [];
+                    datos.proveedores = otrosData.proveedores || [];
+                    datos.cuentas = otrosData.cuentas || [];
+                    datos.alertasConfig = otrosData.alertasConfig || [];
+                    datos.cajas = otrosData.cajas || [];
+                    actualizarVistaActual();
+                    console.log('🔄 Otros datos sincronizados (movimientos, cajas, etc.)');
+                }
+            });
+            
+            console.log('✅ Sincronización en tiempo real ACTIVADA');
+            notif('🔄 Sincronización en tiempo real activada', 'info');
+        }
+        
+        // Actualizar la vista actual sin recargar todo
+        function actualizarVistaActual() {
+            const tabActual = document.querySelector('.tab-content.active');
+            if (tabActual) {
+                const id = tabActual.id;
+                if (id === 'dashboard') actualizarDash();
+                else if (id === 'ingresos') mostrarIngresos();
+                else if (id === 'gastos') mostrarGastos();
+                else if (id === 'compras') mostrarCompras();
+                else if (id === 'cajas') mostrarCajas();
+                else if (id === 'movimientos') mostrarMovimientos();
+                else if (id === 'graficos') mostrarGraficos();
+                else if (id === 'personal') mostrarEmpleados();
+                else if (id === 'clientes') mostrarClientes();
+                else if (id === 'proveedores') mostrarProveedores();
             }
         }
         
