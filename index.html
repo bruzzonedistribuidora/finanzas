@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="es"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
     
@@ -4499,16 +4500,38 @@ function transferirEntreCajas() {
             const totalIngresos = ingresosFiltrados.reduce((s, i) => s + parseFloat(i.monto || 0), 0);
             const totalGastos = gastosFiltrados.reduce((s, g) => s + parseFloat(g.monto || 0), 0);
             
-            // Preparar datos por mes
+            // Preparar datos por mes - FILTRAR POR AÑO
             const meses = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
             const ingresoPorMes = [];
             const gastoPorMes = [];
             const balancePorMes = [];
             
+            // Determinar el año a mostrar (del filtro o actual)
+            const añoActual = new Date().getFullYear();
+            let añoGrafico = añoActual;
+            
+            // Si hay filtro de período personalizado, usar ese año
+            const periodoActual = datos.config.periodoFiltro;
+            if (periodoActual === 'personalizado' && datos.config.fechaDesde) {
+                añoGrafico = new Date(datos.config.fechaDesde).getFullYear();
+            }
+            
             meses.forEach((mes, idx) => {
-                const ing = datos.ingresos.filter(i => new Date(i.fecha).getMonth() === idx).reduce((s, i) => s + (parseFloat(i.monto || 0)), 0);
-                const gast = datos.gastos.filter(g => new Date(g.fecha).getMonth() === idx).reduce((s, g) => s + (parseFloat(g.monto || 0)), 0);
-                const comp = datos.compras.filter(c => new Date(c.fecha).getMonth() === idx).reduce((s, c) => s + (parseFloat(c.monto || 0)), 0);
+                // Filtrar por mes Y año
+                const ing = datos.ingresos.filter(i => {
+                    const fecha = new Date(i.fecha);
+                    return fecha.getMonth() === idx && fecha.getFullYear() === añoGrafico;
+                }).reduce((s, i) => s + (parseFloat(i.monto || 0)), 0);
+                
+                const gast = datos.gastos.filter(g => {
+                    const fecha = new Date(g.fecha);
+                    return fecha.getMonth() === idx && fecha.getFullYear() === añoGrafico;
+                }).reduce((s, g) => s + (parseFloat(g.monto || 0)), 0);
+                
+                const comp = datos.compras.filter(c => {
+                    const fecha = new Date(c.fecha);
+                    return fecha.getMonth() === idx && fecha.getFullYear() === añoGrafico;
+                }).reduce((s, c) => s + (parseFloat(c.monto || 0)), 0);
                 
                 ingresoPorMes.push(Math.round(ing * datos.config.tipoCambioBNA));
                 gastoPorMes.push(Math.round((gast + comp) * datos.config.tipoCambioBNA));
@@ -4526,7 +4549,7 @@ function transferirEntreCajas() {
             
             html += '</div>';
             
-            html += '<div class="section"><h3>📈 Comparación Mensual (Ingresos, Gastos, Balance)</h3>';
+            html += '<div class="section"><h3>📈 Comparación Mensual (Ingresos, Gastos, Balance) - Año ' + añoGrafico + '</h3>';
             html += '<div class="chart-container" style="height: 400px;"><canvas id="chartMeses"></canvas></div></div>';
             
             document.getElementById('panelGraficos').innerHTML = html;
@@ -4650,12 +4673,12 @@ function transferirEntreCajas() {
                                 },
                                 title: {
                                     display: true,
-                                    text: 'Evolución Mensual del Negocio'
+                                    text: 'Evolución Mensual del Negocio - ' + añoGrafico
                                 }
                             },
                             scales: {
                                 y: {
-                                    beginAtZero: true,
+                                    beginAtZero: false,
                                     ticks: {
                                         callback: function(value) {
                                             return '$' + value.toLocaleString('es-AR');
