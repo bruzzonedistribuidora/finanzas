@@ -291,7 +291,7 @@
 </head>
 <body>
     <!-- PANTALLA DE LOGIN -->
-    <div id="loginOverlay" class="login-overlay" style="display: flex;">
+    <div id="loginOverlay" class="login-overlay" style="display: none;">
         <div class="login-box">
             <div class="logo">💰</div>
             <h2>Sistema Financiero v10.0</h2>
@@ -303,7 +303,7 @@
         </div>
     </div>
 
-    <div class="container" id="mainContainer" style="display: none;">
+    <div class="container" id="mainContainer" style="display: block;">
         <div class="header">
             <div class="dolar-badge" id="dolarBadge" onclick="cambiarTab(&#39;configuracion&#39;)" style="cursor:pointer;" title="Click para actualizar">💵 USD $<span id="tipoCambio">1.455</span></div>
             <div style="position: absolute; top: 15px; right: 60px; background: #17a2b8; color: white; padding: 6px 12px; border-radius: 8px; font-size: 11px; font-weight: bold;">☁️ Firebase</div>
@@ -314,7 +314,7 @@
         </div>
         <div id="notifs"></div>
         
-        <div class="tabs" id="tabs"><button class="tab">📁 Carga</button><button class="tab">📊 Dashboard</button><button class="tab">💰 Ingresos</button><button class="tab">📈 Gastos</button><button class="tab">📋 Detalle</button><button class="tab">🛒 Compras</button><button class="tab">👥 Clientes</button><button class="tab">🏭 Proveed</button><button class="tab">⚖️ P.Equilib</button><button class="tab">🏦 Cajas</button><button class="tab">💱 Movim</button><button class="tab">🔔 Alertas</button><button class="tab">📉 Gráficos</button><button class="tab">🔮 Proyecc</button><button class="tab">💹 Cash Flow</button><button class="tab">🐷 Ahorros/IOL</button><button class="tab">🤖 IA</button><button class="tab">👔 Personal</button><button class="tab">📅 Record</button><button class="tab">📊 Est.Result</button><button class="tab">💹 Cash Flow</button><button class="tab">📈 Rentabilidad</button><button class="tab">📊 Comparativo</button><button class="tab">💾 Backup</button><button class="tab">👥 Usuarios</button><button class="tab">⚙️ Config</button></div>
+        <div class="tabs" id="tabs"><button class="tab">📁 Carga</button><button class="tab">📊 Dashboard</button><button class="tab">💰 Ingresos</button><button class="tab">📈 Gastos</button><button class="tab">📋 Detalle</button><button class="tab">🛒 Compras</button><button class="tab">👥 Clientes</button><button class="tab">🏭 Proveed</button><button class="tab">⚖️ P.Equilib</button><button class="tab">🏦 Cajas</button><button class="tab">💱 Movim</button><button class="tab">🔔 Alertas</button><button class="tab">📉 Gráficos</button><button class="tab">🔮 Proyecc</button><button class="tab">💹 Cash Flow</button><button class="tab">🐷 Ahorros/IOL</button><button class="tab">🤖 IA</button><button class="tab">👔 Personal</button><button class="tab">📅 Record</button><button class="tab">📊 Est.Result</button><button class="tab">📈 Rentabilidad</button><button class="tab">📊 Comparativo</button><button class="tab">💾 Backup</button><button class="tab">👥 Usuarios</button><button class="tab">⚙️ Config</button></div>
         <div id="content">
                 <div id="carga" class="tab-content">
                     <h2>📁 Carga de Datos</h2>
@@ -6668,7 +6668,6 @@ Responde de forma clara, práctica y en español argentino. Si te preguntan tér
         ];
         
         function cargarUsuarios() {
-            // Primero cargar de localStorage como fallback
             const guardados = localStorage.getItem('sistemaFinanciero_usuarios');
             if (guardados) {
                 usuarios = JSON.parse(guardados);
@@ -6680,61 +6679,22 @@ Responde de forma clara, práctica y en español argentino. Si te preguntan tér
                     password: 'admin123',
                     nombre: 'Administrador',
                     rol: 'admin',
-                    permisos: todasLasVentanas.map(v => v.id),
+                    permisos: todasLasVentanas.map(v => v.id), // Todos los permisos
                     activo: true,
                     fechaCreacion: new Date().toISOString()
                 }];
                 guardarUsuarios();
             }
-            
-            // Si Firebase está activo, cargar desde allí
-            if (firebaseActivo) {
-                db.collection('sistema').doc('usuarios').get().then(function(doc) {
-                    if (doc.exists && doc.data().items && doc.data().items.length > 0) {
-                        usuarios = doc.data().items;
-                        localStorage.setItem('sistemaFinanciero_usuarios', JSON.stringify(usuarios));
-                        console.log('✅ Usuarios cargados desde Firebase:', usuarios.length);
-                    } else {
-                        // No hay usuarios en Firebase, guardar los actuales
-                        guardarUsuarios();
-                    }
-                }).catch(function(err) {
-                    console.log('⚠️ Error cargando usuarios de Firebase:', err);
-                });
-                
-                // Escuchar cambios en tiempo real
-                db.collection('sistema').doc('usuarios').onSnapshot(function(doc) {
-                    if (doc.exists && doc.data().items) {
-                        usuarios = doc.data().items;
-                        localStorage.setItem('sistemaFinanciero_usuarios', JSON.stringify(usuarios));
-                        console.log('🔄 Usuarios sincronizados desde Firebase');
-                    }
-                });
-            }
         }
         
         function guardarUsuarios() {
-            // Guardar en localStorage
             localStorage.setItem('sistemaFinanciero_usuarios', JSON.stringify(usuarios));
-            
-            // Guardar en Firebase si está activo
-            if (firebaseActivo) {
-                db.collection('sistema').doc('usuarios').set({
-                    items: usuarios,
-                    ultimaActualizacion: new Date().toISOString()
-                }).then(function() {
-                    console.log('✅ Usuarios guardados en Firebase');
-                }).catch(function(err) {
-                    console.log('⚠️ Error guardando usuarios en Firebase:', err);
-                });
-            }
         }
         
         function intentarLogin() {
             const usuario = document.getElementById('loginUsuario').value.trim();
             const password = document.getElementById('loginPassword').value;
             const errorEl = document.getElementById('loginError');
-            const btnLogin = document.querySelector('.login-box .btn');
             
             if (!usuario || !password) {
                 errorEl.textContent = 'Completa usuario y contraseña';
@@ -6742,56 +6702,9 @@ Responde de forma clara, práctica y en español argentino. Si te preguntan tér
                 return;
             }
             
-            // Mostrar estado de carga
-            btnLogin.textContent = '⏳ Verificando...';
-            btnLogin.disabled = true;
-            errorEl.style.display = 'none';
+            cargarUsuarios();
             
-            // Primero intentar cargar usuarios de Firebase
-            if (firebaseActivo) {
-                db.collection('sistema').doc('usuarios').get().then(function(doc) {
-                    if (doc.exists && doc.data().items && doc.data().items.length > 0) {
-                        usuarios = doc.data().items;
-                        localStorage.setItem('sistemaFinanciero_usuarios', JSON.stringify(usuarios));
-                    } else {
-                        // Cargar de localStorage si no hay en Firebase
-                        cargarUsuariosLocal();
-                    }
-                    verificarCredenciales(usuario, password, errorEl, btnLogin);
-                }).catch(function(err) {
-                    console.log('⚠️ Error Firebase, usando localStorage:', err);
-                    cargarUsuariosLocal();
-                    verificarCredenciales(usuario, password, errorEl, btnLogin);
-                });
-            } else {
-                cargarUsuariosLocal();
-                verificarCredenciales(usuario, password, errorEl, btnLogin);
-            }
-        }
-        
-        function cargarUsuariosLocal() {
-            const guardados = localStorage.getItem('sistemaFinanciero_usuarios');
-            if (guardados) {
-                usuarios = JSON.parse(guardados);
-            } else {
-                usuarios = [{
-                    id: 1,
-                    usuario: 'admin',
-                    password: 'admin123',
-                    nombre: 'Administrador',
-                    rol: 'admin',
-                    permisos: todasLasVentanas.map(v => v.id),
-                    activo: true,
-                    fechaCreacion: new Date().toISOString()
-                }];
-            }
-        }
-        
-        function verificarCredenciales(usuario, password, errorEl, btnLogin) {
             const user = usuarios.find(u => u.usuario.toLowerCase() === usuario.toLowerCase() && u.password === password && u.activo);
-            
-            btnLogin.textContent = '🔐 Ingresar';
-            btnLogin.disabled = false;
             
             if (user) {
                 usuarioActual = user;
@@ -6809,59 +6722,22 @@ Responde de forma clara, práctica y en español argentino. Si te preguntan tér
         }
         
         function verificarSesion() {
+            cargarUsuarios();
             const sesion = sessionStorage.getItem('sistemaFinanciero_sesion');
-            if (!sesion) return false;
-            
-            const user = JSON.parse(sesion);
-            
-            // Si hay Firebase, verificar con datos actualizados
-            if (firebaseActivo) {
-                db.collection('sistema').doc('usuarios').get().then(function(doc) {
-                    if (doc.exists && doc.data().items) {
-                        usuarios = doc.data().items;
-                        localStorage.setItem('sistemaFinanciero_usuarios', JSON.stringify(usuarios));
-                    } else {
-                        cargarUsuariosLocal();
-                    }
-                    
-                    const userActual = usuarios.find(u => u.id === user.id && u.activo);
-                    if (userActual) {
-                        usuarioActual = userActual;
-                        document.getElementById('loginOverlay').style.display = 'none';
-                        document.getElementById('mainContainer').style.display = 'block';
-                        document.getElementById('nombreUsuarioActual').textContent = userActual.nombre;
-                        init();
-                    } else {
-                        // Usuario ya no existe o fue desactivado
-                        sessionStorage.removeItem('sistemaFinanciero_sesion');
-                        document.getElementById('loginOverlay').style.display = 'flex';
-                        document.getElementById('mainContainer').style.display = 'none';
-                    }
-                }).catch(function(err) {
-                    console.log('Error verificando sesión:', err);
-                    verificarSesionLocal(user);
-                });
-            } else {
-                verificarSesionLocal(user);
+            if (sesion) {
+                const user = JSON.parse(sesion);
+                // Verificar que el usuario aún existe y está activo
+                const userActual = usuarios.find(u => u.id === user.id && u.activo);
+                if (userActual) {
+                    usuarioActual = userActual;
+                    document.getElementById('loginOverlay').style.display = 'none';
+                    document.getElementById('mainContainer').style.display = 'block';
+                    document.getElementById('nombreUsuarioActual').textContent = userActual.nombre;
+                    init();
+                    return true;
+                }
             }
-            
-            return true; // Retorna true para indicar que hay sesión pendiente de verificar
-        }
-        
-        function verificarSesionLocal(user) {
-            cargarUsuariosLocal();
-            const userActual = usuarios.find(u => u.id === user.id && u.activo);
-            if (userActual) {
-                usuarioActual = userActual;
-                document.getElementById('loginOverlay').style.display = 'none';
-                document.getElementById('mainContainer').style.display = 'block';
-                document.getElementById('nombreUsuarioActual').textContent = userActual.nombre;
-                init();
-            } else {
-                sessionStorage.removeItem('sistemaFinanciero_sesion');
-                document.getElementById('loginOverlay').style.display = 'flex';
-                document.getElementById('mainContainer').style.display = 'none';
-            }
+            return false;
         }
         
         function cerrarSesion() {
