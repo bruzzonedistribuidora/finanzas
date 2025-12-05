@@ -1926,12 +1926,15 @@ function verMovimientosCaja(i) {
     }
     html += '</div>';
 
+    // Actualizar el contenido del div
     document.getElementById('detalleMovimientosCaja' + i).innerHTML = html;
-    const elemento = document.getElementById('detalleMovimientosCaja' + i).parentElement;
-    if (elemento.style.display === 'none' || elemento.style.display === '') {
-        elemento.style.display = 'table-row';
+    
+    // Mostrar/ocultar la fila completa
+    const filaDetalle = document.getElementById('filaMovimientosCaja' + i);
+    if (filaDetalle.style.display === 'none' || filaDetalle.style.display === '') {
+        filaDetalle.style.display = 'table-row';
     } else {
-        elemento.style.display = 'none';
+        filaDetalle.style.display = 'none';
     }
 }
 
@@ -2019,8 +2022,8 @@ function mostrarCajas() {
             html += '<button class="btn btn-danger btn-sm" onclick="eliminarCaja(' + i + ')">🗑️</button>';
             html += '</td>';
             html += '</tr>';
-            html += '<tr id="detalleMovimientosCaja' + i + '" style="display:none;"><td colspan="5">';
-            html += '<div id="detalleMovimientosCaja' + i + '" style="padding: 15px; background: #f8f9fa; border-radius: 8px;"></div>';
+            html += '<tr id="filaMovimientosCaja' + i + '" style="display:none;"><td colspan="5">';
+            html += '<div id="detalleMovimientosCaja' + i + '"></div>';
             html += '</td></tr>';
         });
 
