@@ -1751,19 +1751,33 @@
         
         // ============ SINCRONIZAR MOVIMIENTOS CON GASTOS/INGRESOS ============
         function sincronizarMovimientosConGastos() {
-            if (!datos.movimientos || datos.movimientos.length === 0) return;
+            console.log('🔄 SINCRONIZACIÓN: Iniciando...');
+            console.log('🔄 Total movimientos:', datos.movimientos ? datos.movimientos.length : 0);
+            console.log('🔄 Total gastos antes:', datos.gastos ? datos.gastos.length : 0);
+            console.log('🔄 Total ingresos antes:', datos.ingresos ? datos.ingresos.length : 0);
+            
+            if (!datos.movimientos || datos.movimientos.length === 0) {
+                console.log('⚠️ No hay movimientos para sincronizar');
+                return;
+            }
             
             let gastosCreados = 0;
             let ingresosCreados = 0;
+            let movimientosProcesados = 0;
             
-            datos.movimientos.forEach(mov => {
+            datos.movimientos.forEach((mov, idx) => {
+                console.log(`📋 Procesando movimiento ${idx + 1}:`, mov);
+                movimientosProcesados++;
+                
                 // Para EGRESOS: crear gasto si no existe
                 if (mov.tipo === 'egreso') {
+                    console.log('  💸 Es un EGRESO');
                     // Verificar si ya existe un gasto con este movimientoId
                     const gastoExiste = datos.gastos.some(g => g.movimientoId === mov.id);
+                    console.log('  ❓ ¿Ya existe gasto?', gastoExiste);
                     
                     if (!gastoExiste) {
-                        datos.gastos.push({
+                        const nuevoGasto = {
                             movimientoId: mov.id,
                             monto: mov.monto || 0,
                             fecha: mov.fecha,
@@ -1772,18 +1786,22 @@
                             cat: 'Movimiento de Caja',
                             esVariable: true,
                             desdeMovimientos: true
-                        });
+                        };
+                        datos.gastos.push(nuevoGasto);
                         gastosCreados++;
+                        console.log('  ✅ Gasto creado:', nuevoGasto);
                     }
                 }
                 
                 // Para INGRESOS: crear ingreso si no existe
                 if (mov.tipo === 'ingreso') {
+                    console.log('  💰 Es un INGRESO');
                     // Verificar si ya existe un ingreso con este movimientoId
                     const ingresoExiste = datos.ingresos.some(i => i.movimientoId === mov.id);
+                    console.log('  ❓ ¿Ya existe ingreso?', ingresoExiste);
                     
                     if (!ingresoExiste) {
-                        datos.ingresos.push({
+                        const nuevoIngreso = {
                             movimientoId: mov.id,
                             monto: mov.monto || 0,
                             montoBruto: mov.monto || 0,
@@ -1793,16 +1811,30 @@
                             metodo: mov.cajaOrigen || 'Sin caja',
                             cat: 'Movimiento de Caja',
                             desdeMovimientos: true
-                        });
+                        };
+                        datos.ingresos.push(nuevoIngreso);
                         ingresosCreados++;
+                        console.log('  ✅ Ingreso creado:', nuevoIngreso);
                     }
                 }
-                // Las transferencias NO se sincronizan (son movimientos internos)
+                
+                if (mov.tipo === 'transferencia') {
+                    console.log('  🔄 Es una TRANSFERENCIA (no se sincroniza)');
+                }
             });
+            
+            console.log('📊 RESULTADO SINCRONIZACIÓN:');
+            console.log('  - Movimientos procesados:', movimientosProcesados);
+            console.log('  - Gastos creados:', gastosCreados);
+            console.log('  - Ingresos creados:', ingresosCreados);
+            console.log('  - Total gastos después:', datos.gastos.length);
+            console.log('  - Total ingresos después:', datos.ingresos.length);
             
             if (gastosCreados > 0 || ingresosCreados > 0) {
                 console.log('✅ Sincronización: ' + gastosCreados + ' gastos y ' + ingresosCreados + ' ingresos creados desde movimientos');
                 guardarDatos(); // Guardar los cambios
+            } else {
+                console.log('ℹ️ No se crearon nuevos registros (ya estaban sincronizados)');
             }
         }
         
