@@ -1739,6 +1739,66 @@
             
             // Actualizar selectores de cajas en formularios
             actualizarSelectoresCajas();
+            
+            // NUEVO: Sincronizar movimientos con gastos/ingresos
+            sincronizarMovimientosConGastos();
+        }
+        
+        // ============ SINCRONIZAR MOVIMIENTOS CON GASTOS/INGRESOS ============
+        function sincronizarMovimientosConGastos() {
+            if (!datos.movimientos || datos.movimientos.length === 0) return;
+            
+            let gastosCreados = 0;
+            let ingresosCreados = 0;
+            
+            datos.movimientos.forEach(mov => {
+                // Para EGRESOS: crear gasto si no existe
+                if (mov.tipo === 'egreso') {
+                    // Verificar si ya existe un gasto con este movimientoId
+                    const gastoExiste = datos.gastos.some(g => g.movimientoId === mov.id);
+                    
+                    if (!gastoExiste) {
+                        datos.gastos.push({
+                            movimientoId: mov.id,
+                            monto: mov.monto || 0,
+                            fecha: mov.fecha,
+                            desc: mov.descripcion || 'Egreso - ' + (mov.cajaOrigen || 'Movimiento'),
+                            metodo: mov.cajaOrigen || 'Sin caja',
+                            cat: 'Movimiento de Caja',
+                            esVariable: true,
+                            desdeMovimientos: true
+                        });
+                        gastosCreados++;
+                    }
+                }
+                
+                // Para INGRESOS: crear ingreso si no existe
+                if (mov.tipo === 'ingreso') {
+                    // Verificar si ya existe un ingreso con este movimientoId
+                    const ingresoExiste = datos.ingresos.some(i => i.movimientoId === mov.id);
+                    
+                    if (!ingresoExiste) {
+                        datos.ingresos.push({
+                            movimientoId: mov.id,
+                            monto: mov.monto || 0,
+                            montoBruto: mov.monto || 0,
+                            retencion: 0,
+                            fecha: mov.fecha,
+                            desc: mov.descripcion || 'Ingreso - ' + (mov.cajaOrigen || 'Movimiento'),
+                            metodo: mov.cajaOrigen || 'Sin caja',
+                            cat: 'Movimiento de Caja',
+                            desdeMovimientos: true
+                        });
+                        ingresosCreados++;
+                    }
+                }
+                // Las transferencias NO se sincronizan (son movimientos internos)
+            });
+            
+            if (gastosCreados > 0 || ingresosCreados > 0) {
+                console.log('✅ Sincronización: ' + gastosCreados + ' gastos y ' + ingresosCreados + ' ingresos creados desde movimientos');
+                guardarDatos(); // Guardar los cambios
+            }
         }
         
         // Función para actualizar selectores de cajas en formularios de ingreso/gasto/compra
@@ -3096,6 +3156,9 @@ function transferirEntreCajas() {
         }
 
         function mostrarGastos() {
+            // Sincronizar movimientos con gastos antes de mostrar
+            sincronizarMovimientosConGastos();
+            
             const gastosFiltrados = aplicarFiltros(datos.gastos);
             const fijos = gastosFiltrados.filter(g => !g.esVariable);
             const variables = gastosFiltrados.filter(g => g.esVariable);
@@ -3177,6 +3240,9 @@ function transferirEntreCajas() {
         }
 
         function mostrarGastosDetalle() {
+            // Sincronizar movimientos con gastos antes de mostrar
+            sincronizarMovimientosConGastos();
+            
             const gastosFiltrados = aplicarFiltros(datos.gastos);
             
             if (gastosFiltrados.length === 0) {
@@ -3419,6 +3485,9 @@ function transferirEntreCajas() {
         }
 
         function mostrarIngresos() {
+            // Sincronizar movimientos con ingresos antes de mostrar
+            sincronizarMovimientosConGastos();
+            
             const ingresosFiltrados = aplicarFiltros(datos.ingresos);
             const totalIngresos = ingresosFiltrados.reduce((s, i) => s + parseFloat(i.monto || 0), 0);
             const totalRetenciones = ingresosFiltrados.reduce((s, i) => s + parseFloat(i.retencion || 0), 0);
