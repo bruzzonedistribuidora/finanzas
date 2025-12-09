@@ -5020,7 +5020,19 @@ function transferirEntreCajas() {
 
         // ============ MOVIMIENTOS ============
         function mostrarMovimientos() {
-            const movimientosFiltrados = aplicarFiltros(datos.movimientos);
+            console.log('🔄 mostrarMovimientos() - Iniciando...');
+            console.log('🔄 Total movimientos en datos:', datos.movimientos ? datos.movimientos.length : 0);
+            
+            // NO aplicar filtros en movimientos - siempre mostrar todos
+            const movimientosFiltrados = datos.movimientos || [];
+            console.log('🔄 Movimientos a mostrar:', movimientosFiltrados.length);
+            
+            // Mostrar advertencia si hay filtros activos en otras secciones
+            let advertenciaFiltros = '';
+            if (datos.filtros.activo) {
+                console.log('⚠️ Filtros activos detectados');
+                advertenciaFiltros = '<div class="alert alert-warning">⚠️ <b>Nota:</b> Hay filtros activos en otras secciones (Dashboard, Gastos, Ingresos), pero aquí se muestran <b>TODOS los movimientos</b> sin filtrar. <button class="btn btn-sm btn-info" onclick="limpiarFiltros()" style="margin-left:10px;">🔄 Limpiar filtros globales</button></div>';
+            }
             
             // Asegurar que existan las cajas
             if (!datos.cajas) datos.cajas = [];
@@ -5036,6 +5048,9 @@ function transferirEntreCajas() {
             }
             
             let html = '<div class="section"><h3>➕ Registrar Movimiento</h3>';
+            
+            // Mostrar advertencia si hay filtros activos
+            html += advertenciaFiltros;
             
             if (datos.cajas.length === 0) {
                 html += '<div class="alert alert-warning">⚠️ Primero debes crear cajas en la pestaña <b>🏦 Cajas</b> para poder registrar movimientos.</div>';
@@ -5126,9 +5141,10 @@ function transferirEntreCajas() {
             
             // Tabla de movimientos
             html += '<div class="section"><h3>📋 Historial de Movimientos</h3>';
+            html += `<div class="alert alert-info">📊 Total de movimientos registrados: <b>${datos.movimientos.length}</b></div>`;
             
             if (movimientosFiltrados.length === 0) {
-                html += '<div class="alert alert-info">Sin movimientos registrados</div>';
+                html += '<div class="alert alert-warning">⚠️ Sin movimientos registrados. Los movimientos que registres aquí aparecerán en esta tabla.</div>';
             } else {
                 html += '<table><tr><th>Fecha</th><th>Tipo</th><th>Caja</th><th>Descripción</th><th>Monto (ARS)</th><th></th></tr>';
                 movimientosFiltrados.slice().reverse().forEach((m, idx) => {
