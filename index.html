@@ -3126,14 +3126,15 @@ function transferirEntreCajas() {
             if (fijos.length === 0) {
                 html += '<div class="alert alert-info">📋 No hay gastos fijos ' + (datos.filtros.activo ? 'que coincidan con el filtro.' : 'registrados.') + '</div>';
             } else {
-                html += '<table><tr><th>Fecha</th><th>Descripción</th><th>Monto (ARS)</th><th>Método</th><th>Categoría</th><th></th></tr>';
+                html += '<table><tr><th>Fecha</th><th>Descripción</th><th>Monto (ARS)</th><th>🏦 Caja/Método</th><th>Categoría</th><th></th></tr>';
                 fijos.forEach((g) => {
                     const indiceReal = datos.gastos.indexOf(g);
+                    const esDesdeMovimientos = g.desdeMovimientos ? '<span style="background:#667eea;color:white;padding:2px 6px;border-radius:4px;font-size:0.8em;margin-left:5px;">📤 Movimiento</span>' : '';
                     html += `<tr>
                         <td>${fmtFecha(g.fecha)}</td>
                         <td>${g.desc}</td>
                         <td>${fmt(g.monto)}</td>
-                        <td>${g.metodo}</td>
+                        <td><b>${g.metodo}</b>${esDesdeMovimientos}</td>
                         <td>${g.cat}</td>
                         <td><button class="btn btn-danger btn-sm" onclick="eliminarGasto(${indiceReal})">🗑️</button></td>
                     </tr>`;
@@ -3146,14 +3147,15 @@ function transferirEntreCajas() {
             if (variables.length === 0) {
                 html += '<div class="alert alert-info">📋 No hay gastos variables ' + (datos.filtros.activo ? 'que coincidan con el filtro.' : 'registrados.') + '</div>';
             } else {
-                html += '<table><tr><th>Fecha</th><th>Descripción</th><th>Monto (ARS)</th><th>Método</th><th>Categoría</th><th></th></tr>';
+                html += '<table><tr><th>Fecha</th><th>Descripción</th><th>Monto (ARS)</th><th>🏦 Caja/Método</th><th>Categoría</th><th></th></tr>';
                 variables.forEach((g) => {
                     const indiceReal = datos.gastos.indexOf(g);
+                    const esDesdeMovimientos = g.desdeMovimientos ? '<span style="background:#667eea;color:white;padding:2px 6px;border-radius:4px;font-size:0.8em;margin-left:5px;">📤 Movimiento</span>' : '';
                     html += `<tr>
                         <td>${fmtFecha(g.fecha)}</td>
                         <td>${g.desc}</td>
                         <td>${fmt(g.monto)}</td>
-                        <td>${g.metodo}</td>
+                        <td><b>${g.metodo}</b>${esDesdeMovimientos}</td>
                         <td>${g.cat}</td>
                         <td><button class="btn btn-danger btn-sm" onclick="eliminarGasto(${indiceReal})">🗑️</button></td>
                     </tr>`;
@@ -3266,15 +3268,16 @@ function transferirEntreCajas() {
                         <td colspan="5">
                             <div style="padding: 10px; background: #f8f9fa;">
                                 <table style="margin: 0;">
-                                    <tr><th>Fecha</th><th>Monto (ARS)</th><th>Método</th></tr>
+                                    <tr><th>Fecha</th><th>Monto (ARS)</th><th>🏦 Caja/Método</th></tr>
                     `;
                 
                 gastos.forEach(g => {
+                    const esDesdeMovimientos = g.desdeMovimientos ? '<span style="background:#667eea;color:white;padding:2px 4px;border-radius:3px;font-size:0.75em;margin-left:3px;">📤</span>' : '';
                     html += `
                         <tr>
                             <td>${fmtFecha(g.fecha)}</td>
                             <td>${fmt(g.monto)}</td>
-                            <td>${g.metodo}</td>
+                            <td><b>${g.metodo}</b>${esDesdeMovimientos}</td>
                         </tr>
                     `;
                 });
@@ -3325,15 +3328,16 @@ function transferirEntreCajas() {
                         <td colspan="5">
                             <div style="padding: 10px; background: #f8f9fa;">
                                 <table style="margin: 0;">
-                                    <tr><th>Fecha</th><th>Monto (ARS)</th><th>Método</th></tr>
+                                    <tr><th>Fecha</th><th>Monto (ARS)</th><th>🏦 Caja/Método</th></tr>
                     `;
                 
                 gastos.forEach(g => {
+                    const esDesdeMovimientos = g.desdeMovimientos ? '<span style="background:#667eea;color:white;padding:2px 4px;border-radius:3px;font-size:0.75em;margin-left:3px;">📤</span>' : '';
                     html += `
                         <tr>
                             <td>${fmtFecha(g.fecha)}</td>
                             <td>${fmt(g.monto)}</td>
-                            <td>${g.metodo}</td>
+                            <td><b>${g.metodo}</b>${esDesdeMovimientos}</td>
                         </tr>
                     `;
                 });
