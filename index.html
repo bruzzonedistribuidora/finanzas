@@ -3324,7 +3324,7 @@ function transferirEntreCajas() {
             if (gastosDeMovimientos.length > 0) {
                 const totalMovimientos = gastosDeMovimientos.reduce((s, g) => s + parseFloat(g.monto || 0), 0);
                 
-                // Agrupar por concepto/descripción
+                // Agrupar por concepto/descripción (normalizado a mayúsculas)
                 const porConcepto = {};
                 gastosDeMovimientos.forEach(g => {
                     // Extraer el concepto de la descripción
@@ -3335,10 +3335,13 @@ function transferirEntreCajas() {
                         concepto = concepto.replace('Egreso - ', '').trim();
                     }
                     
-                    if (!porConcepto[concepto]) {
-                        porConcepto[concepto] = [];
+                    // Normalizar a MAYÚSCULAS para agrupar sin importar mayúsculas/minúsculas
+                    const conceptoNormalizado = concepto.toUpperCase().trim();
+                    
+                    if (!porConcepto[conceptoNormalizado]) {
+                        porConcepto[conceptoNormalizado] = [];
                     }
-                    porConcepto[concepto].push(g);
+                    porConcepto[conceptoNormalizado].push(g);
                 });
                 
                 html += `
