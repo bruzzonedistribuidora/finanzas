@@ -3318,6 +3318,113 @@ function transferirEntreCajas() {
             });
             
             let html = obtenerBadgePeriodo();
+            
+            // NUEVA SECCIÓN: Gastos de Movimientos por Concepto/Descripción
+            const gastosDeMovimientos = gastosFiltrados.filter(g => g.desdeMovimientos);
+            if (gastosDeMovimientos.length > 0) {
+                const totalMovimientos = gastosDeMovimientos.reduce((s, g) => s + parseFloat(g.monto || 0), 0);
+                
+                // Agrupar por concepto/descripción
+                const porConcepto = {};
+                gastosDeMovimientos.forEach(g => {
+                    // Extraer el concepto de la descripción
+                    let concepto = g.desc || 'Sin descripción';
+                    
+                    // Si la descripción es "Egreso - NOMBREDELACAJA", extraer solo el concepto
+                    if (concepto.includes('Egreso - ')) {
+                        concepto = concepto.replace('Egreso - ', '').trim();
+                    }
+                    
+                    if (!porConcepto[concepto]) {
+                        porConcepto[concepto] = [];
+                    }
+                    porConcepto[concepto].push(g);
+                });
+                
+                html += `
+                    <div class="section" style="background: linear-gradient(135deg, #667eea, #764ba2); color: white; border: none; margin-bottom: 20px;">
+                        <h3 style="color: white; border-bottom: 3px solid white; padding-bottom: 10px;">📤 GASTOS DESDE MOVIMIENTOS POR CONCEPTO</h3>
+                        <p style="opacity: 0.9; margin-top: 10px;">Aquí puedes ver todos tus gastos agrupados por concepto (ej: Casa, Combustible, Flete, etc.)</p>
+                        <div class="grid-3" style="gap: 15px; margin-top: 15px;">
+                            <div style="background: rgba(255,255,255,0.2); padding: 15px; border-radius: 10px; backdrop-filter: blur(10px);">
+                                <div style="font-size: 1.3rem; font-weight: bold; margin: 5px 0;">${gastosDeMovimientos.length}</div>
+                                <div style="font-size: 0.9rem; opacity: 0.9;">📤 Total Gastos</div>
+                            </div>
+                            <div style="background: rgba(255,255,255,0.2); padding: 15px; border-radius: 10px; backdrop-filter: blur(10px);">
+                                <div style="font-size: 1.3rem; font-weight: bold; margin: 5px 0;">${Object.keys(porConcepto).length}</div>
+                                <div style="font-size: 0.9rem; opacity: 0.9;">📋 Conceptos Diferentes</div>
+                            </div>
+                            <div style="background: rgba(255,255,255,0.2); padding: 15px; border-radius: 10px; backdrop-filter: blur(10px);">
+                                <div style="font-size: 1.3rem; font-weight: bold; margin: 5px 0;">${fmt(totalMovimientos)}</div>
+                                <div style="font-size: 0.9rem; opacity: 0.9;">💸 Total Gastado</div>
+                            </div>
+                        </div>
+                        
+                        <div style="margin-top: 20px;">
+                            <table style="background: white; color: #333;">
+                                <tr>
+                                    <th>📋 Concepto / Para qué se gastó</th>
+                                    <th>Cantidad de Gastos</th>
+                                    <th>Total Gastado (ARS)</th>
+                                    <th>Promedio (ARS)</th>
+                                    <th>Ver Detalle</th>
+                                </tr>
+                `;
+                
+                // Ordenar por total gastado (de mayor a menor)
+                const conceptosOrdenados = Object.entries(porConcepto).sort((a, b) => {
+                    const totalA = a[1].reduce((s, g) => s + parseFloat(g.monto || 0), 0);
+                    const totalB = b[1].reduce((s, g) => s + parseFloat(g.monto || 0), 0);
+                    return totalB - totalA;
+                });
+                
+                conceptosOrdenados.forEach(([concepto, gastos]) => {
+                    const total = gastos.reduce((s, g) => s + parseFloat(g.monto || 0), 0);
+                    const promedio = total / gastos.length;
+                    const id = concepto.replace(/\s/g, '_').replace(/[^a-zA-Z0-9_]/g, '');
+                    
+                    html += `
+                        <tr>
+                            <td><b style="color: #667eea;">📌 ${concepto}</b></td>
+                            <td>${gastos.length}</td>
+                            <td><b style="color: #dc3545;">${fmt(total)}</b></td>
+                            <td>${fmt(promedio)}</td>
+                            <td>
+                                <button class="btn btn-info btn-sm" onclick="verDetalleGasto('mov_${id}', 'movimiento')">👁️ Ver</button>
+                            </td>
+                        </tr>
+                        <tr id="mov_${id}_movimiento" style="display:none;">
+                            <td colspan="5">
+                                <div style="padding: 10px; background: #f8f9fa;">
+                                    <table style="margin: 0;">
+                                        <tr><th>Fecha</th><th>🏦 Caja</th><th>Monto (ARS)</th></tr>
+                    `;
+                    
+                    gastos.forEach(g => {
+                        html += `
+                            <tr>
+                                <td>${fmtFecha(g.fecha)}</td>
+                                <td><b>${g.metodo}</b></td>
+                                <td><b style="color: #dc3545;">${fmt(g.monto)}</b></td>
+                            </tr>
+                        `;
+                    });
+                    
+                    html += `
+                                    </table>
+                                </div>
+                            </td>
+                        </tr>
+                    `;
+                });
+                
+                html += `
+                            </table>
+                        </div>
+                    </div>
+                `;
+            }
+            
             html += `
                 <div class="grid-3">
                     <div class="card" style="background: linear-gradient(135deg, #6f42c1, #9b59b6)">
