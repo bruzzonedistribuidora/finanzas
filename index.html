@@ -1517,11 +1517,16 @@
         let ignorarSnapshot = false;
         
         function guardarDatos() {
+            console.log('💾 guardarDatos() - Iniciando...');
+            console.log('💾 Movimientos a guardar:', datos.movimientos.length);
+            
             // Guardar en localStorage (backup local)
             localStorage.setItem('datosFinancieros', JSON.stringify(datos));
+            console.log('💾 Guardado en localStorage');
             
             // Guardar en Firebase - dividido en documentos separados
             if (firebaseActivo && db) {
+                console.log('💾 Firebase activo, guardando...');
                 ignorarSnapshot = true;
                 
                 const batch = db.batch();
@@ -5199,6 +5204,10 @@ function transferirEntreCajas() {
         }
 
         function agregarMovimientoFondos() {
+            console.log('🔍 DEBUG: Intentando agregar movimiento...');
+            console.log('🔍 Datos actuales de movimientos:', datos.movimientos);
+            console.log('🔍 Cantidad de cajas:', datos.cajas.length);
+            
             const tipo = document.getElementById('tipoMovimiento').value;
             const cajaOrigenIdx = parseInt(document.getElementById('cajaOrigen').value);
             const cajaDestinoIdx = document.getElementById('cajaDestino') ? parseInt(document.getElementById('cajaDestino').value) : null;
@@ -5206,21 +5215,33 @@ function transferirEntreCajas() {
             const montoARS = parseFloat(document.getElementById('montoMovimiento').value) || 0;
             const montoUSD = montoARS / datos.config.tipoCambioBNA;
             
-            if (montoARS <= 0) { notif('⚠️ Ingresa un monto válido', 'warning'); return; }
+            console.log('🔍 Tipo:', tipo);
+            console.log('🔍 Caja origen index:', cajaOrigenIdx);
+            console.log('🔍 Monto ARS:', montoARS);
+            console.log('🔍 Monto USD:', montoUSD);
+            
+            if (montoARS <= 0) { 
+                console.log('❌ Error: Monto inválido');
+                notif('⚠️ Ingresa un monto válido', 'warning'); 
+                return; 
+            }
             
             if (isNaN(cajaOrigenIdx) || !datos.cajas[cajaOrigenIdx]) {
+                console.log('❌ Error: Caja no válida');
                 notif('⚠️ Selecciona una caja válida', 'warning');
                 return;
             }
             
             // Validar transferencia entre mismas cajas
             if (tipo === 'transferencia' && cajaOrigenIdx === cajaDestinoIdx) {
+                console.log('❌ Error: Transferencia a misma caja');
                 notif('⚠️ La caja origen y destino deben ser diferentes', 'warning');
                 return;
             }
             
             // Validar saldo suficiente para egreso o transferencia
             if ((tipo === 'egreso' || tipo === 'transferencia') && datos.cajas[cajaOrigenIdx].monto < montoUSD) {
+                console.log('❌ Error: Saldo insuficiente');
                 notif('⚠️ Saldo insuficiente en ' + datos.cajas[cajaOrigenIdx].nombre, 'warning');
                 return;
             }
@@ -5228,6 +5249,8 @@ function transferirEntreCajas() {
             // Crear el movimiento con ID único
             const movimientoId = Date.now() + '_' + Math.random().toString(36).substr(2, 9);
             const fechaHoy = new Date().toISOString().split('T')[0];
+            
+            console.log('✅ Creando movimiento con ID:', movimientoId);
             
             const movimiento = {
                 id: movimientoId,
@@ -5314,9 +5337,15 @@ function transferirEntreCajas() {
             }
             
             datos.movimientos.push(movimiento);
+            console.log('✅ Movimiento agregado al array');
+            console.log('🔍 Total movimientos ahora:', datos.movimientos.length);
+            console.log('🔍 Último movimiento:', datos.movimientos[datos.movimientos.length - 1]);
             
             guardarDatos();
+            console.log('💾 guardarDatos() ejecutado');
+            
             mostrarMovimientos();
+            console.log('🔄 mostrarMovimientos() ejecutado');
             
             // Mensaje según tipo
             let mensaje = '';
