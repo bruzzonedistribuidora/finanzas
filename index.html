@@ -4,8 +4,8 @@
     
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sistema Financiero v10.0 PRO - PESIFICADO [COMPLETO]</title>
-    <script src="./Sistema Financiero v10.0 PRO - PESIFICADO [COMPLETO]_files/xlsx.full.min.js.descarga"></script>
-    <script src="./Sistema Financiero v10.0 PRO - PESIFICADO [COMPLETO]_files/chart.js.descarga"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
@@ -322,7 +322,41 @@
                     
                     <div class="section" style="background: linear-gradient(135deg, #667eea, #764ba2); color: white; border: none;">
                         <h3 style="color: white; border-bottom: 3px solid white;">📊 Estado Actual de Datos Cargados</h3>
-                        <div id="estadoDatos" style="margin-top: 15px;"></div>
+                        <div id="estadoDatos" style="margin-top: 15px;">
+                <div class="grid-3" style="gap: 15px;">
+                    <div style="background: rgba(255,255,255,0.2); padding: 15px; border-radius: 10px; backdrop-filter: blur(10px);">
+                        <h4 style="color: white; margin: 0 0 10px 0; font-size: 1rem;">💰 Ingresos</h4>
+                        <div style="font-size: 1.3rem; font-weight: bold; margin: 5px 0; color: #4ade80;">$251.618.940 ARS</div>
+                        <div style="font-size: 1.1rem; margin: 5px 0;">7441 registros</div>
+                        <div style="font-size: 0.9rem; opacity: 0.9;">
+                            📅 Última: <b>05/12/2025</b>
+                        </div>
+                    </div>
+                    
+                    <div style="background: rgba(255,255,255,0.2); padding: 15px; border-radius: 10px; backdrop-filter: blur(10px);">
+                        <h4 style="color: white; margin: 0 0 10px 0; font-size: 1rem;">📤 Gastos</h4>
+                        <div style="font-size: 1.3rem; font-weight: bold; margin: 5px 0; color: #f87171;">$62.844.926 ARS</div>
+                        <div style="font-size: 1.1rem; margin: 5px 0;">520 registros</div>
+                        <div style="font-size: 0.9rem; opacity: 0.9;">
+                            📅 Última: <b>09/12/2025</b>
+                        </div>
+                    </div>
+                    
+                    <div style="background: rgba(255,255,255,0.2); padding: 15px; border-radius: 10px; backdrop-filter: blur(10px);">
+                        <h4 style="color: white; margin: 0 0 10px 0; font-size: 1rem;">🛒 Compras</h4>
+                        <div style="font-size: 1.3rem; font-weight: bold; margin: 5px 0; color: #fb923c;">$170.651.236 ARS</div>
+                        <div style="font-size: 1.1rem; margin: 5px 0;">3062 registros</div>
+                        <div style="font-size: 0.9rem; opacity: 0.9;">
+                            📅 Última: <b>25/11/2025</b>
+                        </div>
+                    </div>
+                </div>
+                
+                <div style="margin-top: 15px; padding: 12px; background: rgba(255,255,255,0.15); border-radius: 8px; font-size: 0.9rem;">
+                    <b>💡 Tip:</b> Los importes se muestran en <b>PESOS ARGENTINOS (ARS)</b> convertidos al tipo de cambio BNA actual ($1.455).
+                     Verificá las últimas fechas para evitar duplicados al cargar nuevos datos.
+                </div>
+            </div>
                     </div>
                     
                     <div class="section">
@@ -345,7 +379,7 @@
                                 <option value="Cobros">Cobros</option>
                                 <option value="Otros">Otros</option>
                             </select>
-                            <select id="ingCaja" title="Vincular a caja (opcional)" style="border: 2px solid rgb(102, 126, 234);"><option value="">💼 Sin vincular a caja</option><option value="0">📦 COLCHON ($1.300.000)</option><option value="1">📦 EFECTIVO ($932.910)</option><option value="2">📦 CHEQUES ($3.423.245)</option><option value="3">📦 ECHEQ ($1.776.012)</option><option value="4">📦 BANCO NACION ($4.531)</option><option value="5">📦 BANCO SANTANDER ($0)</option><option value="6">📦 MP FERRETERIA ($1.009.421)</option><option value="7">📦 MP MARISOL ($801.818)</option><option value="8">📦 MP MAURI ($1.168.689)</option></select><button class="btn btn-success" onclick="registrarIngreso()">✅ Registrar</button>
+                            <select id="ingCaja" title="Vincular a caja (opcional)" style="border: 2px solid rgb(102, 126, 234);"><option value="">💼 Sin vincular a caja</option><option value="0">📦 COLCHON ($1.400.000)</option><option value="1">📦 EFECTIVO ($821.910)</option><option value="2">📦 CHEQUES ($3.423.245)</option><option value="3">📦 ECHEQ ($1.776.012)</option><option value="4">📦 BANCO NACION ($4.531)</option><option value="5">📦 BANCO SANTANDER ($0)</option><option value="6">📦 MP FERRETERIA ($1.009.421)</option><option value="7">📦 MP MARISOL ($540.518)</option><option value="8">📦 MP MAURI ($1.168.689)</option></select><button class="btn btn-success" onclick="registrarIngreso()">✅ Registrar</button>
                         </div>
                     </div>
 
@@ -389,7 +423,7 @@
                                 <option value="false">Gasto Fijo</option>
                                 <option value="true">Gasto Variable</option>
                             </select>
-                            <select id="gastCaja" title="Vincular a caja (opcional)" style="border: 2px solid rgb(102, 126, 234);"><option value="">💼 Sin vincular a caja</option><option value="0">📦 COLCHON ($1.300.000)</option><option value="1">📦 EFECTIVO ($932.910)</option><option value="2">📦 CHEQUES ($3.423.245)</option><option value="3">📦 ECHEQ ($1.776.012)</option><option value="4">📦 BANCO NACION ($4.531)</option><option value="5">📦 BANCO SANTANDER ($0)</option><option value="6">📦 MP FERRETERIA ($1.009.421)</option><option value="7">📦 MP MARISOL ($801.818)</option><option value="8">📦 MP MAURI ($1.168.689)</option></select><button class="btn btn-warning" onclick="registrarGasto()">✅ Registrar</button>
+                            <select id="gastCaja" title="Vincular a caja (opcional)" style="border: 2px solid rgb(102, 126, 234);"><option value="">💼 Sin vincular a caja</option><option value="0">📦 COLCHON ($1.400.000)</option><option value="1">📦 EFECTIVO ($821.910)</option><option value="2">📦 CHEQUES ($3.423.245)</option><option value="3">📦 ECHEQ ($1.776.012)</option><option value="4">📦 BANCO NACION ($4.531)</option><option value="5">📦 BANCO SANTANDER ($0)</option><option value="6">📦 MP FERRETERIA ($1.009.421)</option><option value="7">📦 MP MARISOL ($540.518)</option><option value="8">📦 MP MAURI ($1.168.689)</option></select><button class="btn btn-warning" onclick="registrarGasto()">✅ Registrar</button>
                         </div>
                     </div>
 
@@ -422,7 +456,7 @@
                                 <option value="Equipamiento">Equipamiento</option>
                                 <option value="Otros">Otros</option>
                             </select>
-                            <select id="compCaja" title="Vincular a caja (opcional)" style="border: 2px solid rgb(102, 126, 234);"><option value="">💼 Sin vincular a caja</option><option value="0">📦 COLCHON ($1.300.000)</option><option value="1">📦 EFECTIVO ($932.910)</option><option value="2">📦 CHEQUES ($3.423.245)</option><option value="3">📦 ECHEQ ($1.776.012)</option><option value="4">📦 BANCO NACION ($4.531)</option><option value="5">📦 BANCO SANTANDER ($0)</option><option value="6">📦 MP FERRETERIA ($1.009.421)</option><option value="7">📦 MP MARISOL ($801.818)</option><option value="8">📦 MP MAURI ($1.168.689)</option></select><button class="btn btn-info" onclick="registrarCompra()">✅ Registrar</button>
+                            <select id="compCaja" title="Vincular a caja (opcional)" style="border: 2px solid rgb(102, 126, 234);"><option value="">💼 Sin vincular a caja</option><option value="0">📦 COLCHON ($1.400.000)</option><option value="1">📦 EFECTIVO ($821.910)</option><option value="2">📦 CHEQUES ($3.423.245)</option><option value="3">📦 ECHEQ ($1.776.012)</option><option value="4">📦 BANCO NACION ($4.531)</option><option value="5">📦 BANCO SANTANDER ($0)</option><option value="6">📦 MP FERRETERIA ($1.009.421)</option><option value="7">📦 MP MARISOL ($540.518)</option><option value="8">📦 MP MAURI ($1.168.689)</option></select><button class="btn btn-info" onclick="registrarCompra()">✅ Registrar</button>
                         </div>
                     </div>
 
@@ -603,13 +637,13 @@
                 </div><div style="display: flex; align-items: flex-end;">
                     <button class="btn btn-success" onclick="agregarMovimientoFondos()" style="width: 100%;">✅ Registrar Movimiento</button>
                 </div></div></div><div class="section"><h3>💰 Saldos Actuales por Caja</h3><div class="card" style="margin-bottom: 15px; background: linear-gradient(135deg, #667eea, #764ba2);">
-                    <div class="card-value">$10.266.626 ARS</div>
+                    <div class="card-value">$10.144.326 ARS</div>
                     <div class="card-label">💼 Total en Todas las Cajas</div>
                 </div><div class="grid-4"><div class="card" style="background: linear-gradient(135deg, #28a745, #20c997);">
-                        <div class="card-value">$1.300.000 ARS</div>
+                        <div class="card-value">$1.400.000 ARS</div>
                         <div class="card-label">COLCHON</div>
                     </div><div class="card" style="background: linear-gradient(135deg, #007bff, #0056b3);">
-                        <div class="card-value">$782.910 ARS</div>
+                        <div class="card-value">$821.910 ARS</div>
                         <div class="card-label">EFECTIVO</div>
                     </div><div class="card" style="background: linear-gradient(135deg, #00b4d8, #0096c7);">
                         <div class="card-value">$3.423.245 ARS</div>
@@ -627,12 +661,152 @@
                         <div class="card-value">$1.009.421 ARS</div>
                         <div class="card-label">MP FERRETERIA</div>
                     </div><div class="card" style="background: linear-gradient(135deg, #795548, #5d4037);">
-                        <div class="card-value">$801.818 ARS</div>
+                        <div class="card-value">$540.518 ARS</div>
                         <div class="card-label">MP MARISOL</div>
                     </div><div class="card" style="background: linear-gradient(135deg, #28a745, #20c997);">
                         <div class="card-value">$1.168.689 ARS</div>
                         <div class="card-label">MP MAURI</div>
-                    </div></div></div><div class="section"><h3>📋 Historial de Movimientos</h3><div class="alert alert-info">Sin movimientos registrados</div></div></div>
+                    </div></div></div><div class="section"><h3>📋 Historial de Movimientos</h3><table><tbody><tr><th>Fecha</th><th>Tipo</th><th>Caja</th><th>Descripción</th><th>Monto (ARS)</th><th></th></tr><tr>
+                        <td>09/12/2025</td>
+                        <td><span style="color: #dc3545; font-weight: 600;">📤 Egreso</span></td>
+                        <td>EFECTIVO</td>
+                        <td>administracion</td>
+                        <td style="font-weight: 600;"><span style="color: #dc3545;">-$5.000</span> ARS</td>
+                        <td><button class="btn btn-danger btn-sm" onclick="eliminarMovimientoFondos(19)">🗑️</button></td>
+                    </tr><tr>
+                        <td>07/12/2025</td>
+                        <td><span style="color: #dc3545; font-weight: 600;">📤 Egreso</span></td>
+                        <td>MP MARISOL</td>
+                        <td>Casa</td>
+                        <td style="font-weight: 600;"><span style="color: #dc3545;">-$20.000</span> ARS</td>
+                        <td><button class="btn btn-danger btn-sm" onclick="eliminarMovimientoFondos(18)">🗑️</button></td>
+                    </tr><tr>
+                        <td>06/12/2025</td>
+                        <td><span style="color: #dc3545; font-weight: 600;">📤 Egreso</span></td>
+                        <td>MP MARISOL</td>
+                        <td>Casa</td>
+                        <td style="font-weight: 600;"><span style="color: #dc3545;">-$28.000</span> ARS</td>
+                        <td><button class="btn btn-danger btn-sm" onclick="eliminarMovimientoFondos(17)">🗑️</button></td>
+                    </tr><tr>
+                        <td>06/12/2025</td>
+                        <td><span style="color: #dc3545; font-weight: 600;">📤 Egreso</span></td>
+                        <td>MP MARISOL</td>
+                        <td>Asado</td>
+                        <td style="font-weight: 600;"><span style="color: #dc3545;">-$5.300</span> ARS</td>
+                        <td><button class="btn btn-danger btn-sm" onclick="eliminarMovimientoFondos(16)">🗑️</button></td>
+                    </tr><tr>
+                        <td>06/12/2025</td>
+                        <td><span style="color: #dc3545; font-weight: 600;">📤 Egreso</span></td>
+                        <td>EFECTIVO</td>
+                        <td>FLETE</td>
+                        <td style="font-weight: 600;"><span style="color: #dc3545;">-$6.000</span> ARS</td>
+                        <td><button class="btn btn-danger btn-sm" onclick="eliminarMovimientoFondos(15)">🗑️</button></td>
+                    </tr><tr>
+                        <td>06/12/2025</td>
+                        <td><span style="color: #dc3545; font-weight: 600;">📤 Egreso</span></td>
+                        <td>-</td>
+                        <td>-</td>
+                        <td style="font-weight: 600;"><span style="color: #dc3545;">-$432.935</span> ARS</td>
+                        <td><button class="btn btn-danger btn-sm" onclick="eliminarMovimientoFondos(14)">🗑️</button></td>
+                    </tr><tr>
+                        <td>06/12/2025</td>
+                        <td><span style="color: #dc3545; font-weight: 600;">📤 Egreso</span></td>
+                        <td>MP MARISOL</td>
+                        <td>Casa</td>
+                        <td style="font-weight: 600;"><span style="color: #dc3545;">-$8.000</span> ARS</td>
+                        <td><button class="btn btn-danger btn-sm" onclick="eliminarMovimientoFondos(13)">🗑️</button></td>
+                    </tr><tr>
+                        <td>06/12/2025</td>
+                        <td><span style="color: #dc3545; font-weight: 600;">📤 Egreso</span></td>
+                        <td>MP MARISOL</td>
+                        <td>Sueldo mari</td>
+                        <td style="font-weight: 600;"><span style="color: #dc3545;">-$190.000</span> ARS</td>
+                        <td><button class="btn btn-danger btn-sm" onclick="eliminarMovimientoFondos(12)">🗑️</button></td>
+                    </tr><tr>
+                        <td>06/12/2025</td>
+                        <td><span style="color: #dc3545; font-weight: 600;">📤 Egreso</span></td>
+                        <td>MP MARISOL</td>
+                        <td>Casa</td>
+                        <td style="font-weight: 600;"><span style="color: #dc3545;">-$10.000</span> ARS</td>
+                        <td><button class="btn btn-danger btn-sm" onclick="eliminarMovimientoFondos(11)">🗑️</button></td>
+                    </tr><tr>
+                        <td>05/12/2025</td>
+                        <td><span style="color: #28a745; font-weight: 600;">📥 Ingreso</span></td>
+                        <td>EFECTIVO</td>
+                        <td>correccion</td>
+                        <td style="font-weight: 600;"><span style="color: #28a745;">+$150.000</span> ARS</td>
+                        <td><button class="btn btn-danger btn-sm" onclick="eliminarMovimientoFondos(10)">🗑️</button></td>
+                    </tr><tr>
+                        <td>05/12/2025</td>
+                        <td><span style="color: #dc3545; font-weight: 600;">📤 Egreso</span></td>
+                        <td>EFECTIVO</td>
+                        <td>rio cuarto</td>
+                        <td style="font-weight: 600;"><span style="color: #dc3545;">-$150.000</span> ARS</td>
+                        <td><button class="btn btn-danger btn-sm" onclick="eliminarMovimientoFondos(9)">🗑️</button></td>
+                    </tr><tr>
+                        <td>05/12/2025</td>
+                        <td><span style="color: #dc3545; font-weight: 600;">📤 Egreso</span></td>
+                        <td>EFECTIVO</td>
+                        <td>Rio cuarto</td>
+                        <td style="font-weight: 600;"><span style="color: #dc3545;">-$150.000</span> ARS</td>
+                        <td><button class="btn btn-danger btn-sm" onclick="eliminarMovimientoFondos(8)">🗑️</button></td>
+                    </tr><tr>
+                        <td>04/12/2025</td>
+                        <td><span style="color: #dc3545; font-weight: 600;">📤 Egreso</span></td>
+                        <td>MP MARISOL</td>
+                        <td>Casa</td>
+                        <td style="font-weight: 600;"><span style="color: #dc3545;">-$49.000</span> ARS</td>
+                        <td><button class="btn btn-danger btn-sm" onclick="eliminarMovimientoFondos(7)">🗑️</button></td>
+                    </tr><tr>
+                        <td>04/12/2025</td>
+                        <td><span style="color: #dc3545; font-weight: 600;">📤 Egreso</span></td>
+                        <td>EFECTIVO</td>
+                        <td>Comisionistas</td>
+                        <td style="font-weight: 600;"><span style="color: #dc3545;">-$17.000</span> ARS</td>
+                        <td><button class="btn btn-danger btn-sm" onclick="eliminarMovimientoFondos(6)">🗑️</button></td>
+                    </tr><tr>
+                        <td>02/12/2025</td>
+                        <td><span style="color: #dc3545; font-weight: 600;">📤 Egreso</span></td>
+                        <td>MP MARISOL</td>
+                        <td>Casa</td>
+                        <td style="font-weight: 600;"><span style="color: #dc3545;">-$79.000</span> ARS</td>
+                        <td><button class="btn btn-danger btn-sm" onclick="eliminarMovimientoFondos(5)">🗑️</button></td>
+                    </tr><tr>
+                        <td>01/12/2025</td>
+                        <td><span style="color: #28a745; font-weight: 600;">📥 Ingreso</span></td>
+                        <td>CHEQUES</td>
+                        <td>Pago</td>
+                        <td style="font-weight: 600;"><span style="color: #28a745;">+$1.455.515</span> ARS</td>
+                        <td><button class="btn btn-danger btn-sm" onclick="eliminarMovimientoFondos(4)">🗑️</button></td>
+                    </tr><tr>
+                        <td>01/12/2025</td>
+                        <td><span style="color: #28a745; font-weight: 600;">📥 Ingreso</span></td>
+                        <td>EFECTIVO</td>
+                        <td>Ventas</td>
+                        <td style="font-weight: 600;"><span style="color: #28a745;">+$229.900</span> ARS</td>
+                        <td><button class="btn btn-danger btn-sm" onclick="eliminarMovimientoFondos(3)">🗑️</button></td>
+                    </tr><tr>
+                        <td>01/12/2025</td>
+                        <td><span style="color: #dc3545; font-weight: 600;">📤 Egreso</span></td>
+                        <td>MP MARISOL</td>
+                        <td>Coop los cisne</td>
+                        <td style="font-weight: 600;"><span style="color: #dc3545;">-$22.834</span> ARS</td>
+                        <td><button class="btn btn-danger btn-sm" onclick="eliminarMovimientoFondos(2)">🗑️</button></td>
+                    </tr><tr>
+                        <td>01/12/2025</td>
+                        <td><span style="color: #dc3545; font-weight: 600;">📤 Egreso</span></td>
+                        <td>EFECTIVO</td>
+                        <td>IMP EMPLEADO</td>
+                        <td style="font-weight: 600;"><span style="color: #dc3545;">-$13.000</span> ARS</td>
+                        <td><button class="btn btn-danger btn-sm" onclick="eliminarMovimientoFondos(1)">🗑️</button></td>
+                    </tr><tr>
+                        <td>01/12/2025</td>
+                        <td><span style="color: #dc3545; font-weight: 600;">📤 Egreso</span></td>
+                        <td>EFECTIVO</td>
+                        <td>Casa</td>
+                        <td style="font-weight: 600;"><span style="color: #dc3545;">-$38.000</span> ARS</td>
+                        <td><button class="btn btn-danger btn-sm" onclick="eliminarMovimientoFondos(0)">🗑️</button></td>
+                    </tr></tbody></table></div></div>
                 </div>
 
                 <div id="alertas" class="tab-content">
@@ -660,11 +834,11 @@
                     <div id="panelAhorros"></div>
                 </div>
 
-                <div id="cajas" class="tab-content active">
+                <div id="cajas" class="tab-content">
                     <h2>🏦 Gestión de Cajas - Colchón de Emergencia</h2>
-                    <div id="panelCajas"><div style="display: inline-block; background: #28a745; color: white; padding: 8px 16px; border-radius: 20px; font-size: 13px; font-weight: bold; margin-bottom: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.15);">
-                📅 Noviembre 2025
-            </div><div class="section"><h3>💰 Gestión de Cajas</h3><div class="card"><div class="card-value">$10.266.626 ARS</div><div class="card-label">💼 Total en Cajas</div></div><h4 style="margin-top: 20px;">➕ Crear Nueva Caja</h4><div class="grid-4" style="margin-top: 10px;"><input type="text" id="cajaNombre" placeholder="Nombre (ej: Caja Colchón)"><input type="number" id="cajaMonto" placeholder="Monto inicial (ARS)" step="1"><input type="text" id="cajaDesc" placeholder="Descripción (opcional)"><button class="btn btn-success" onclick="agregarCaja()">✅ Crear Caja</button></div></div><div class="section" style="border-left: 4px solid #17a2b8; background: linear-gradient(135deg, rgba(23,162,184,0.1), rgba(32,201,151,0.1));"><h3>🔄 Transferir entre Cajas</h3><div class="grid-4" style="margin-top: 10px;"><div><label><b>De (Origen):</b></label><select id="transferenciaOrigen" style="width: 100%;"><option value="0">COLCHON ($1.300.000)</option><option value="1">EFECTIVO ($782.910)</option><option value="2">CHEQUES ($3.423.245)</option><option value="3">ECHEQ ($1.776.012)</option><option value="4">BANCO NACION ($4.531)</option><option value="5">BANCO SANTANDER ($0)</option><option value="6">MP FERRETERIA ($1.009.421)</option><option value="7">MP MARISOL ($801.818)</option><option value="8">MP MAURI ($1.168.689)</option></select></div><div><label><b>A (Destino):</b></label><select id="transferenciaDestino" style="width: 100%;"><option value="0">COLCHON ($1.300.000)</option><option value="1" selected="">EFECTIVO ($782.910)</option><option value="2">CHEQUES ($3.423.245)</option><option value="3">ECHEQ ($1.776.012)</option><option value="4">BANCO NACION ($4.531)</option><option value="5">BANCO SANTANDER ($0)</option><option value="6">MP FERRETERIA ($1.009.421)</option><option value="7">MP MARISOL ($801.818)</option><option value="8">MP MAURI ($1.168.689)</option></select></div><div><label><b>Monto (ARS):</b></label><input type="number" id="transferenciaMonto" placeholder="Monto a transferir" step="1" style="width: 100%;"></div><div><label>&nbsp;</label><button class="btn btn-info" onclick="transferirEntreCajas()" style="width: 100%;">🔄 Transferir</button></div></div><div style="margin-top: 10px;"><input type="text" id="transferenciaConcepto" placeholder="Concepto/Motivo de la transferencia (opcional)" style="width: 100%;"></div></div><div class="section"><h3>📦 Lista de Cajas</h3><table><tbody><tr><th>Nombre</th><th>Monto (ARS)</th><th>Descripción</th><th>Movimientos</th><th>Acciones</th></tr><tr><td><b>COLCHON</b></td><td>$1.300.000</td><td>CAJA</td><td><span class="badge badge-info">3</span></td><td><button class="btn btn-info btn-sm" onclick="agregarMovimientoCaja(0)" title="Agregar movimiento">➕</button> <button class="btn btn-warning btn-sm" onclick="verMovimientosCaja(0)" title="Ver movimientos">👁️</button> <button class="btn btn-danger btn-sm" onclick="eliminarCaja(0)">🗑️</button></td></tr><tr id="detalleMovimientosCaja0" style="display:none;"><td colspan="5"><div id="detalleMovimientosCaja0" style="padding: 15px; background: #f8f9fa; border-radius: 8px;"></div></td></tr><tr><td><b>EFECTIVO</b></td><td>$782.910</td><td>CAJA</td><td><span class="badge badge-info">11</span></td><td><button class="btn btn-info btn-sm" onclick="agregarMovimientoCaja(1)" title="Agregar movimiento">➕</button> <button class="btn btn-warning btn-sm" onclick="verMovimientosCaja(1)" title="Ver movimientos">👁️</button> <button class="btn btn-danger btn-sm" onclick="eliminarCaja(1)">🗑️</button></td></tr><tr id="detalleMovimientosCaja1" style="display: block;"><h4>📋 Movimientos de EFECTIVO</h4><th>Fecha</th><th>Tipo</th><th>Monto (ARS)</th><th>Motivo</th><td>19/11/2025</td><td>📤 Salida</td><td><b>$12.471</b></td><td>flete</td><td>20/11/2025</td><td>📤 Salida</td><td><b>$7.500</b></td><td>EMPLEADO</td><td>26/11/2025</td><td>📥 Entrada</td><td><b>$569.462</b></td><td>act</td><td>01/12/2025</td><td>📥 Entrada</td><td><b>$321.800</b></td><td>act</td><td>01/12/2025</td><td>📤 Salida</td><td><b>$38.000</b></td><td>Casa</td><td>01/12/2025</td><td>📤 Salida</td><td><b>$13.000</b></td><td>IMP EMPLEADO</td><td>01/12/2025</td><td>📥 Entrada</td><td><b>$229.900</b></td><td>Ventas</td><td>01/12/2025</td><td>📤 Salida</td><td><b>$100.000</b></td><td>🔄 Transferencia a COLCHON - Transferencia entre cajas</td><td>04/12/2025</td><td>📤 Salida</td><td><b>$17.000</b></td><td>Comisionistas</td><td>05/12/2025</td><td>📤 Salida</td><td><b>$150.000</b></td><td>Rio cuarto</td><td>05/12/2025</td><td>📤 Salida</td><td><b>$150.000</b></td><td>rio cuarto</td></tr><tr><td><b>CHEQUES</b></td><td>$3.423.245</td><td>CAJA</td><td><span class="badge badge-info">3</span></td><td><button class="btn btn-info btn-sm" onclick="agregarMovimientoCaja(2)" title="Agregar movimiento">➕</button> <button class="btn btn-warning btn-sm" onclick="verMovimientosCaja(2)" title="Ver movimientos">👁️</button> <button class="btn btn-danger btn-sm" onclick="eliminarCaja(2)">🗑️</button></td></tr><tr id="detalleMovimientosCaja2" style="display:none;"><td colspan="5"><div id="detalleMovimientosCaja2" style="padding: 15px; background: #f8f9fa; border-radius: 8px;"></div></td></tr><tr><td><b>ECHEQ</b></td><td>$1.776.012</td><td>CAJA</td><td><span class="badge badge-info">2</span></td><td><button class="btn btn-info btn-sm" onclick="agregarMovimientoCaja(3)" title="Agregar movimiento">➕</button> <button class="btn btn-warning btn-sm" onclick="verMovimientosCaja(3)" title="Ver movimientos">👁️</button> <button class="btn btn-danger btn-sm" onclick="eliminarCaja(3)">🗑️</button></td></tr><tr id="detalleMovimientosCaja3" style="display:none;"><td colspan="5"><div id="detalleMovimientosCaja3" style="padding: 15px; background: #f8f9fa; border-radius: 8px;"></div></td></tr><tr><td><b>BANCO NACION</b></td><td>$4.531</td><td>CAJA</td><td><span class="badge badge-info">2</span></td><td><button class="btn btn-info btn-sm" onclick="agregarMovimientoCaja(4)" title="Agregar movimiento">➕</button> <button class="btn btn-warning btn-sm" onclick="verMovimientosCaja(4)" title="Ver movimientos">👁️</button> <button class="btn btn-danger btn-sm" onclick="eliminarCaja(4)">🗑️</button></td></tr><tr id="detalleMovimientosCaja4" style="display:none;"><td colspan="5"><div id="detalleMovimientosCaja4" style="padding: 15px; background: #f8f9fa; border-radius: 8px;"></div></td></tr><tr><td><b>BANCO SANTANDER</b></td><td>$0</td><td>caja</td><td><span class="badge badge-info">1</span></td><td><button class="btn btn-info btn-sm" onclick="agregarMovimientoCaja(5)" title="Agregar movimiento">➕</button> <button class="btn btn-warning btn-sm" onclick="verMovimientosCaja(5)" title="Ver movimientos">👁️</button> <button class="btn btn-danger btn-sm" onclick="eliminarCaja(5)">🗑️</button></td></tr><tr id="detalleMovimientosCaja5" style="display:none;"><td colspan="5"><div id="detalleMovimientosCaja5" style="padding: 15px; background: #f8f9fa; border-radius: 8px;"></div></td></tr><tr><td><b>MP FERRETERIA</b></td><td>$1.009.421</td><td>CAJA</td><td><span class="badge badge-info">2</span></td><td><button class="btn btn-info btn-sm" onclick="agregarMovimientoCaja(6)" title="Agregar movimiento">➕</button> <button class="btn btn-warning btn-sm" onclick="verMovimientosCaja(6)" title="Ver movimientos">👁️</button> <button class="btn btn-danger btn-sm" onclick="eliminarCaja(6)">🗑️</button></td></tr><tr id="detalleMovimientosCaja6" style="display:none;"><td colspan="5"><div id="detalleMovimientosCaja6" style="padding: 15px; background: #f8f9fa; border-radius: 8px;"></div></td></tr><tr><td><b>MP MARISOL</b></td><td>$801.818</td><td>CAJA</td><td><span class="badge badge-info">5</span></td><td><button class="btn btn-info btn-sm" onclick="agregarMovimientoCaja(7)" title="Agregar movimiento">➕</button> <button class="btn btn-warning btn-sm" onclick="verMovimientosCaja(7)" title="Ver movimientos">👁️</button> <button class="btn btn-danger btn-sm" onclick="eliminarCaja(7)">🗑️</button></td></tr><tr id="detalleMovimientosCaja7" style="display:none;"><td colspan="5"><div id="detalleMovimientosCaja7" style="padding: 15px; background: #f8f9fa; border-radius: 8px;"></div></td></tr><tr><td><b>MP MAURI</b></td><td>$1.168.689</td><td>CAJA</td><td><span class="badge badge-info">1</span></td><td><button class="btn btn-info btn-sm" onclick="agregarMovimientoCaja(8)" title="Agregar movimiento">➕</button> <button class="btn btn-warning btn-sm" onclick="verMovimientosCaja(8)" title="Ver movimientos">👁️</button> <button class="btn btn-danger btn-sm" onclick="eliminarCaja(8)">🗑️</button></td></tr><tr id="detalleMovimientosCaja8" style="display:none;"><td colspan="5"><div id="detalleMovimientosCaja8" style="padding: 15px; background: #f8f9fa; border-radius: 8px;"></div></td></tr></tbody></table></div><div class="section" style="border-left: 4px solid #ffc107; background: #fff9e6;"><h3>🛡️ Colchón de Emergencia</h3><div class="grid-2"><div class="card" style="background: linear-gradient(135deg, #ffc107, #ff9800);"><div class="card-value">$146.378.428 ARS</div><div class="card-label">🎯 Colchón Recomendado (3 meses)</div></div><div class="card" style="background: linear-gradient(135deg, #ffc107, #ff9800);"><div class="card-value">$0 ARS</div><div class="card-label">⚠️ Colchón Actual</div></div></div><div class="alert alert-warning"><b>⚠️ Colchón Incompleto</b><br>Te faltan $146.378.428 ARS para tener 3 meses de gastos fijos guardados.<br>Recomendación: Ahorra $24.396.405 ARS por mes durante 6 meses.</div></div></div>
+                    <div id="panelCajas"><div style="display: inline-block; background: #667eea; color: white; padding: 8px 16px; border-radius: 20px; font-size: 13px; font-weight: bold; margin-bottom: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.15);">
+                📅 Todo el período
+            </div><div class="section"><h3>💰 Gestión de Cajas</h3><div class="card"><div class="card-value">$10.144.326 ARS</div><div class="card-label">💼 Total en Cajas</div></div><h4 style="margin-top: 20px;">➕ Crear Nueva Caja</h4><div class="grid-4" style="margin-top: 10px;"><input type="text" id="cajaNombre" placeholder="Nombre (ej: Caja Colchón)"><input type="number" id="cajaMonto" placeholder="Monto inicial (ARS)" step="1"><input type="text" id="cajaDesc" placeholder="Descripción (opcional)"><button class="btn btn-success" onclick="agregarCaja()">✅ Crear Caja</button></div></div><div class="section" style="border-left: 4px solid #17a2b8; background: linear-gradient(135deg, rgba(23,162,184,0.1), rgba(32,201,151,0.1));"><h3>🔄 Transferir entre Cajas</h3><div class="grid-4" style="margin-top: 10px;"><div><label><b>De (Origen):</b></label><select id="transferenciaOrigen" style="width: 100%;"><option value="0">COLCHON ($1.400.000)</option><option value="1">EFECTIVO ($821.910)</option><option value="2">CHEQUES ($3.423.245)</option><option value="3">ECHEQ ($1.776.012)</option><option value="4">BANCO NACION ($4.531)</option><option value="5">BANCO SANTANDER ($0)</option><option value="6">MP FERRETERIA ($1.009.421)</option><option value="7">MP MARISOL ($540.518)</option><option value="8">MP MAURI ($1.168.689)</option></select></div><div><label><b>A (Destino):</b></label><select id="transferenciaDestino" style="width: 100%;"><option value="0">COLCHON ($1.400.000)</option><option value="1" selected="">EFECTIVO ($821.910)</option><option value="2">CHEQUES ($3.423.245)</option><option value="3">ECHEQ ($1.776.012)</option><option value="4">BANCO NACION ($4.531)</option><option value="5">BANCO SANTANDER ($0)</option><option value="6">MP FERRETERIA ($1.009.421)</option><option value="7">MP MARISOL ($540.518)</option><option value="8">MP MAURI ($1.168.689)</option></select></div><div><label><b>Monto (ARS):</b></label><input type="number" id="transferenciaMonto" placeholder="Monto a transferir" step="1" style="width: 100%;"></div><div><label>&nbsp;</label><button class="btn btn-info" onclick="transferirEntreCajas()" style="width: 100%;">🔄 Transferir</button></div></div><div style="margin-top: 10px;"><input type="text" id="transferenciaConcepto" placeholder="Concepto/Motivo de la transferencia (opcional)" style="width: 100%;"></div></div><div class="section"><h3>📦 Lista de Cajas</h3><table><tbody><tr><th>Nombre</th><th>Monto (ARS)</th><th>Descripción</th><th>Movimientos</th><th>Acciones</th></tr><tr><td><b>COLCHON</b></td><td>$1.400.000</td><td>CAJA</td><td><span class="badge badge-info">4</span></td><td><button class="btn btn-info btn-sm" onclick="agregarMovimientoCaja(0)" title="Agregar movimiento">➕</button> <button class="btn btn-warning btn-sm" onclick="verMovimientosCaja(0)" title="Ver movimientos">👁️</button> <button class="btn btn-danger btn-sm" onclick="eliminarCaja(0)">🗑️</button></td></tr><tr id="filaMovimientosCaja0" style="display:none;"><td colspan="5"><div id="detalleMovimientosCaja0"></div></td></tr><tr><td><b>EFECTIVO</b></td><td>$821.910</td><td>CAJA</td><td><span class="badge badge-info">15</span></td><td><button class="btn btn-info btn-sm" onclick="agregarMovimientoCaja(1)" title="Agregar movimiento">➕</button> <button class="btn btn-warning btn-sm" onclick="verMovimientosCaja(1)" title="Ver movimientos">👁️</button> <button class="btn btn-danger btn-sm" onclick="eliminarCaja(1)">🗑️</button></td></tr><tr id="filaMovimientosCaja1" style="display:none;"><td colspan="5"><div id="detalleMovimientosCaja1"></div></td></tr><tr><td><b>CHEQUES</b></td><td>$3.423.245</td><td>CAJA</td><td><span class="badge badge-info">3</span></td><td><button class="btn btn-info btn-sm" onclick="agregarMovimientoCaja(2)" title="Agregar movimiento">➕</button> <button class="btn btn-warning btn-sm" onclick="verMovimientosCaja(2)" title="Ver movimientos">👁️</button> <button class="btn btn-danger btn-sm" onclick="eliminarCaja(2)">🗑️</button></td></tr><tr id="filaMovimientosCaja2" style="display:none;"><td colspan="5"><div id="detalleMovimientosCaja2"></div></td></tr><tr><td><b>ECHEQ</b></td><td>$1.776.012</td><td>CAJA</td><td><span class="badge badge-info">2</span></td><td><button class="btn btn-info btn-sm" onclick="agregarMovimientoCaja(3)" title="Agregar movimiento">➕</button> <button class="btn btn-warning btn-sm" onclick="verMovimientosCaja(3)" title="Ver movimientos">👁️</button> <button class="btn btn-danger btn-sm" onclick="eliminarCaja(3)">🗑️</button></td></tr><tr id="filaMovimientosCaja3" style="display:none;"><td colspan="5"><div id="detalleMovimientosCaja3"></div></td></tr><tr><td><b>BANCO NACION</b></td><td>$4.531</td><td>CAJA</td><td><span class="badge badge-info">2</span></td><td><button class="btn btn-info btn-sm" onclick="agregarMovimientoCaja(4)" title="Agregar movimiento">➕</button> <button class="btn btn-warning btn-sm" onclick="verMovimientosCaja(4)" title="Ver movimientos">👁️</button> <button class="btn btn-danger btn-sm" onclick="eliminarCaja(4)">🗑️</button></td></tr><tr id="filaMovimientosCaja4" style="display:none;"><td colspan="5"><div id="detalleMovimientosCaja4"></div></td></tr><tr><td><b>BANCO SANTANDER</b></td><td>$0</td><td>caja</td><td><span class="badge badge-info">1</span></td><td><button class="btn btn-info btn-sm" onclick="agregarMovimientoCaja(5)" title="Agregar movimiento">➕</button> <button class="btn btn-warning btn-sm" onclick="verMovimientosCaja(5)" title="Ver movimientos">👁️</button> <button class="btn btn-danger btn-sm" onclick="eliminarCaja(5)">🗑️</button></td></tr><tr id="filaMovimientosCaja5" style="display:none;"><td colspan="5"><div id="detalleMovimientosCaja5"></div></td></tr><tr><td><b>MP FERRETERIA</b></td><td>$1.009.421</td><td>CAJA</td><td><span class="badge badge-info">2</span></td><td><button class="btn btn-info btn-sm" onclick="agregarMovimientoCaja(6)" title="Agregar movimiento">➕</button> <button class="btn btn-warning btn-sm" onclick="verMovimientosCaja(6)" title="Ver movimientos">👁️</button> <button class="btn btn-danger btn-sm" onclick="eliminarCaja(6)">🗑️</button></td></tr><tr id="filaMovimientosCaja6" style="display:none;"><td colspan="5"><div id="detalleMovimientosCaja6"></div></td></tr><tr><td><b>MP MARISOL</b></td><td>$540.518</td><td>CAJA</td><td><span class="badge badge-info">11</span></td><td><button class="btn btn-info btn-sm" onclick="agregarMovimientoCaja(7)" title="Agregar movimiento">➕</button> <button class="btn btn-warning btn-sm" onclick="verMovimientosCaja(7)" title="Ver movimientos">👁️</button> <button class="btn btn-danger btn-sm" onclick="eliminarCaja(7)">🗑️</button></td></tr><tr id="filaMovimientosCaja7" style="display:none;"><td colspan="5"><div id="detalleMovimientosCaja7"></div></td></tr><tr><td><b>MP MAURI</b></td><td>$1.168.689</td><td>CAJA</td><td><span class="badge badge-info">1</span></td><td><button class="btn btn-info btn-sm" onclick="agregarMovimientoCaja(8)" title="Agregar movimiento">➕</button> <button class="btn btn-warning btn-sm" onclick="verMovimientosCaja(8)" title="Ver movimientos">👁️</button> <button class="btn btn-danger btn-sm" onclick="eliminarCaja(8)">🗑️</button></td></tr><tr id="filaMovimientosCaja8" style="display:none;"><td colspan="5"><div id="detalleMovimientosCaja8"></div></td></tr></tbody></table></div><div class="section" style="border-left: 4px solid #ffc107; background: #fff9e6;"><h3>🛡️ Colchón de Emergencia</h3><div class="grid-2"><div class="card" style="background: linear-gradient(135deg, #ffc107, #ff9800);"><div class="card-value">$146.378.428 ARS</div><div class="card-label">🎯 Colchón Recomendado (3 meses)</div></div><div class="card" style="background: linear-gradient(135deg, #ffc107, #ff9800);"><div class="card-value">$0 ARS</div><div class="card-label">⚠️ Colchón Actual</div></div></div><div class="alert alert-warning"><b>⚠️ Colchón Incompleto</b><br>Te faltan $146.378.428 ARS para tener 3 meses de gastos fijos guardados.<br>Recomendación: Ahorra $24.396.405 ARS por mes durante 6 meses.</div></div></div>
                 </div>
 
                 <div id="asistente" class="tab-content">
@@ -672,9 +846,194 @@
                     <div id="recPanel"></div>
                 </div>
 
-                <div id="empleados" class="tab-content">
+                <div id="empleados" class="tab-content active">
                     <h2>👔 Personal</h2>
-                    <div id="listaEmp"></div>
+                    <div id="listaEmp"><div class="section"><h3>➕ Agregar Empleado</h3><div class="alert alert-info">Ingresa el sueldo en <b>Pesos Argentinos (ARS)</b></div><div class="grid-4"><input type="text" id="empNombre" placeholder="Nombre"><input type="text" id="empPuesto" placeholder="Puesto"><input type="number" id="empSueldo" placeholder="Sueldo (ARS)" step="1000"><button class="btn btn-success" onclick="agregarEmpleado()">✅ Agregar</button></div></div><div class="section"><h3>👔 Lista de Empleados y Adelantos - Diciembre 2025</h3><table><tbody><tr><th>Nombre</th><th>Puesto</th><th>Sueldo Mensual</th><th>Adelantos Pendientes</th><th>Estado del Mes</th><th>Falta Pagar</th><th>Acciones</th></tr><tr>
+                        <td><b>MAURICIO</b></td>
+                        <td>Personal</td>
+                        <td>$207.857</td>
+                        <td>
+                            <span class="badge" style="background: #28a745;">Sin adelantos</span>
+                        </td>
+                        <td>
+                            <span class="badge" style="background: #dc3545;">❌ PENDIENTE</span>
+                        </td>
+                        <td style="font-weight: bold; font-size: 1.1em; color: #dc3545;">
+                            $207.857
+                        </td>
+                        <td>
+                            <button class="btn btn-success btn-sm" onclick="abrirModalPagarSueldo(0)" title="Pagar sueldo">💰 Pagar</button>
+                            <button class="btn btn-info btn-sm" onclick="abrirModalAdelanto(0)" title="Agregar adelanto">💵 Adelanto</button>
+                            <button class="btn btn-warning btn-sm" onclick="verHistorialEmpleado(0)" title="Ver historial">👁️</button>
+                            <button class="btn btn-danger btn-sm" onclick="eliminarEmpleado(0)">🗑️</button>
+                        </td>
+                    </tr><tr>
+                        <td><b>PAPA</b></td>
+                        <td>Personal</td>
+                        <td>$415.714</td>
+                        <td>
+                            <span class="badge" style="background: #28a745;">Sin adelantos</span>
+                        </td>
+                        <td>
+                            <span class="badge" style="background: #dc3545;">❌ PENDIENTE</span>
+                        </td>
+                        <td style="font-weight: bold; font-size: 1.1em; color: #dc3545;">
+                            $415.714
+                        </td>
+                        <td>
+                            <button class="btn btn-success btn-sm" onclick="abrirModalPagarSueldo(1)" title="Pagar sueldo">💰 Pagar</button>
+                            <button class="btn btn-info btn-sm" onclick="abrirModalAdelanto(1)" title="Agregar adelanto">💵 Adelanto</button>
+                            <button class="btn btn-warning btn-sm" onclick="verHistorialEmpleado(1)" title="Ver historial">👁️</button>
+                            <button class="btn btn-danger btn-sm" onclick="eliminarEmpleado(1)">🗑️</button>
+                        </td>
+                    </tr><tr>
+                        <td><b>MARISOL</b></td>
+                        <td>Personal</td>
+                        <td>$166.286</td>
+                        <td>
+                            <span class="badge" style="background: #28a745;">Sin adelantos</span>
+                        </td>
+                        <td>
+                            <span class="badge" style="background: #dc3545;">❌ PENDIENTE</span>
+                        </td>
+                        <td style="font-weight: bold; font-size: 1.1em; color: #dc3545;">
+                            $166.286
+                        </td>
+                        <td>
+                            <button class="btn btn-success btn-sm" onclick="abrirModalPagarSueldo(2)" title="Pagar sueldo">💰 Pagar</button>
+                            <button class="btn btn-info btn-sm" onclick="abrirModalAdelanto(2)" title="Agregar adelanto">💵 Adelanto</button>
+                            <button class="btn btn-warning btn-sm" onclick="verHistorialEmpleado(2)" title="Ver historial">👁️</button>
+                            <button class="btn btn-danger btn-sm" onclick="eliminarEmpleado(2)">🗑️</button>
+                        </td>
+                    </tr><tr>
+                        <td><b>SOSA AGUSTIN</b></td>
+                        <td>EMPLEADO</td>
+                        <td>$980.000</td>
+                        <td>
+                            <span class="badge" style="background: #28a745;">Sin adelantos</span>
+                        </td>
+                        <td>
+                            <span class="badge" style="background: #28a745;">✅ PAGADO</span><br><small style="color:#666;">$432.935 el 2025-12-06</small>
+                        </td>
+                        <td style="font-weight: bold; font-size: 1.1em; color: #28a745;">
+                            ✅ $0
+                        </td>
+                        <td>
+                            <button class="btn btn-success btn-sm" onclick="abrirModalPagarSueldo(3)" title="Pagar sueldo" disabled="" style="opacity:0.5;">💰 Pagar</button>
+                            <button class="btn btn-info btn-sm" onclick="abrirModalAdelanto(3)" title="Agregar adelanto">💵 Adelanto</button>
+                            <button class="btn btn-warning btn-sm" onclick="verHistorialEmpleado(3)" title="Ver historial">👁️</button>
+                            <button class="btn btn-danger btn-sm" onclick="eliminarEmpleado(3)">🗑️</button>
+                        </td>
+                    </tr><tr>
+                        <td><b>SERASSIO AGUSTIN</b></td>
+                        <td>HIJO</td>
+                        <td>$500.000</td>
+                        <td>
+                            <span class="badge" style="background: #28a745;">Sin adelantos</span>
+                        </td>
+                        <td>
+                            <span class="badge" style="background: #dc3545;">❌ PENDIENTE</span>
+                        </td>
+                        <td style="font-weight: bold; font-size: 1.1em; color: #dc3545;">
+                            $500.000
+                        </td>
+                        <td>
+                            <button class="btn btn-success btn-sm" onclick="abrirModalPagarSueldo(4)" title="Pagar sueldo">💰 Pagar</button>
+                            <button class="btn btn-info btn-sm" onclick="abrirModalAdelanto(4)" title="Agregar adelanto">💵 Adelanto</button>
+                            <button class="btn btn-warning btn-sm" onclick="verHistorialEmpleado(4)" title="Ver historial">👁️</button>
+                            <button class="btn btn-danger btn-sm" onclick="eliminarEmpleado(4)">🗑️</button>
+                        </td>
+                    </tr></tbody></table><div class="grid-3" style="margin-top: 20px;">
+                    <div class="alert" style="background: #e3f2fd; border-color: #2196f3;">
+                        <b>💼 Nómina Mensual Total:</b><br>
+                        <span style="font-size: 1.3em;">$2.269.857</span>
+                    </div>
+                    <div class="alert" style="background: #fff3e0; border-color: #ff9800;">
+                        <b>💵 Adelantos a Descontar:</b><br>
+                        <span style="font-size: 1.3em;">-$0</span>
+                    </div>
+                    <div class="alert" style="background: #ffebee; border-color: #f44336;">
+                        <b>📊 FALTA PAGAR (Diciembre):</b><br>
+                        <span style="font-size: 1.5em; font-weight: bold; color: #c62828;">
+                            $1.289.857
+                        </span>
+                        <br><small>1/5 empleados pagados</small>
+                    </div>
+                </div><div style="text-align: center; margin-top: 15px;">
+                        <button class="btn btn-success" onclick="pagarTodosSueldos()" style="padding: 15px 40px; font-size: 1.1em;">
+                            💰 PAGAR TODOS LOS SUELDOS PENDIENTES ($1.289.857)
+                        </button>
+                    </div></div>
+                <div id="modalAdelanto" style="position: fixed; inset: 0px; background: rgba(0, 0, 0, 0.5); z-index: 9999; display: none; align-items: center; justify-content: center;">
+                    <div style="background: white; padding: 30px; border-radius: 12px; box-shadow: 0 8px 32px rgba(0,0,0,0.2); max-width: 500px; width: 90%;">
+                        <h3 style="margin-top: 0; color: #333;">💵 Registrar Adelanto de Sueldo</h3>
+                        <p id="modalEmpleadoNombre" style="color: #666; margin-bottom: 20px;"></p>
+                        
+                        <div style="margin-bottom: 15px;">
+                            <label style="display: block; margin-bottom: 5px;"><b>Monto del Adelanto (ARS)</b></label>
+                            <input type="number" id="adelantoMonto" placeholder="Ej: 50000" step="1000">
+                        </div>
+                        
+                        <div style="margin-bottom: 15px;">
+                            <label style="display: block; margin-bottom: 5px;"><b>Concepto/Motivo</b></label>
+                            <input type="text" id="adelantoConcepto" placeholder="Ej: Adelanto por urgencia">
+                        </div>
+                        
+                        <div style="margin-bottom: 15px;">
+                            <label style="display: block; margin-bottom: 5px;"><b>Fecha</b></label>
+                            <input type="date" id="adelantoFecha" value="2025-12-09">
+                        </div>
+
+                        <div style="margin-bottom: 15px;">
+                            <label style="display: block; margin-bottom: 5px;"><b>¿Es descuento del próximo sueldo?</b></label>
+                            <select id="adelantoDescuento">
+                                <option value="si">Sí - Descontar del sueldo</option>
+                                <option value="no">No - Deuda pendiente</option>
+                            </select>
+                        </div>
+
+                        <div style="display: flex; gap: 10px; justify-content: flex-end;">
+                            <button class="btn btn-warning" onclick="cerrarModalAdelanto()">Cancelar</button>
+                            <button class="btn btn-success" onclick="guardarAdelanto()">✅ Registrar Adelanto</button>
+                        </div>
+                    </div>
+                </div>
+            
+                <div id="modalPagarSueldo" style="display:none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 9999; align-items: center; justify-content: center;">
+                    <div style="background: white; padding: 30px; border-radius: 12px; box-shadow: 0 8px 32px rgba(0,0,0,0.2); max-width: 550px; width: 90%; max-height: 90vh; overflow-y: auto;">
+                        <h3 style="margin-top: 0; color: #333;">💰 Pagar Sueldo</h3>
+                        <p id="modalPagarEmpleadoNombre" style="color: #666; margin-bottom: 20px;"></p>
+                        
+                        <div id="resumenPagoSueldo" style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                            <!-- Se llena dinámicamente -->
+                        </div>
+                        
+                        <div style="margin-bottom: 15px;">
+                            <label style="display: block; margin-bottom: 5px;"><b>Método de Pago</b></label>
+                            <select id="metodoPagoSueldo">
+                                <option value="efectivo">💵 Efectivo</option>
+                                <option value="transferencia">🏦 Transferencia Bancaria</option>
+                                <option value="cheque">📄 Cheque</option>
+                            </select>
+                        </div>
+                        
+                        <div style="margin-bottom: 15px;">
+                            <label style="display: block; margin-bottom: 5px;"><b>Fecha de Pago</b></label>
+                            <input type="date" id="fechaPagoSueldo" value="2025-12-09">
+                        </div>
+
+                        <div style="margin-bottom: 15px;">
+                            <label style="display: block; margin-bottom: 5px;"><b>Observaciones (opcional)</b></label>
+                            <textarea id="obsPagoSueldo" placeholder="Notas adicionales..." style="min-height: 60px;"></textarea>
+                        </div>
+
+                        <div style="display: flex; gap: 10px; justify-content: flex-end;">
+                            <button class="btn btn-warning" onclick="cerrarModalPagarSueldo()">Cancelar</button>
+                            <button class="btn btn-success" onclick="confirmarPagoSueldo()">✅ Confirmar Pago</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
                 </div>
 
                 <div id="recordatorios" class="tab-content">
@@ -7084,4 +7443,7 @@ Responde de forma clara, práctica y en español argentino. Si te preguntan tér
 
 
 
-</body></html>
+
+<div>
+                
+            </div></body></html>
